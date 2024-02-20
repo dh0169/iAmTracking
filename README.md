@@ -18,7 +18,7 @@ Note: You might need to setup ssh keys.
 
 ## Goals
 
-- [X] Create git repo and spring boot project fiels.
+- [X] Create git repo and spring boot project files.
 - [X] Create simple UI for MVP.
 - [ ] TBD
 
