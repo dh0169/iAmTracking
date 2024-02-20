@@ -43,7 +43,6 @@ h1 {
 
 .phone-form input[type=tel] {
     padding: 10px;
-    margin-top: 20px;
     border: none;
     border-radius: 5px;
     width: 300px;
@@ -61,5 +60,15 @@ h1 {
 
 .phone-form button:hover {
     background-color: #FF5722; /* slightly darker tone for hover effect */
+}
+
+
+.message {
+
+    padding: 10px;
+    margin: 20px 0;
+    border-radius: 5px;
+    color: #5D4037;
+
 }
 
