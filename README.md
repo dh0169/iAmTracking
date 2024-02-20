@@ -14,7 +14,7 @@ Note: You might need to setup ssh keys.
 
 2.) Open with Intellij, Maven will download dependencies listed in pom.xml.
 
-3.) Run DemoApplication.java, go to `http://localhost:8080`
+3.) Run iAmTracking.java, go to `http://localhost:8080`
 
 ## Goals
 
