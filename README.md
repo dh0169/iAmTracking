@@ -18,7 +18,7 @@ Note: You might need to setup ssh keys.
 
 ## Goals
 
-- [X] Create git repo and spring boot project.
-- [X] Generated simple UI using GPT-4.
+- [X] Create git repo and spring boot project fiels.
+- [X] Create simple UI for MVP.
 - [ ] TBD
 
