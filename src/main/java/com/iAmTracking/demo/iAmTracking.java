@@ -25,6 +25,26 @@ public class iAmTracking {
         return "index";
     }
 
+    @RequestMapping("/login")
+    public String login(Model model){
+        return "login";
+    }
+
+    @RequestMapping("/register")
+    public String register(Model model) {
+        return "register";
+    }
+
+    @RequestMapping("/dashboard/{phoneNum}")
+    public String dashboard(@PathVariable("phoneNum") String phoneNum, Model model) {
+        model.addAttribute("msg", "Success! Please check your phone for a link");
+        return "dashboard";
+    }
+
+    @RequestMapping("/profile/{phoneNum}")
+    public String profile(@PathVariable("phoneNum") String phoneNum, Model model) {
+        return "dashboard";
+    }
 
     @PostMapping("/subscribed")
     //RequestBody must be filled or will return 400. puts entire body into variable
@@ -55,5 +75,4 @@ public class iAmTracking {
         model.addAttribute("msg", "Success! Please check your phone for a link");
         return "subscribed";
     }
-
 }

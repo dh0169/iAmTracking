@@ -22,12 +22,19 @@
 
 
 
-            <div class="phone-form mb-3" >
-                <div class="row justify-content-center">
-                    <button type="submit" class="btn btn-primary col-md-2"><a class="text-light" href="/login">Login</a></button>
-                    <button type="submit" class="btn btn-primary col-md-2"><a class="text-light" href="/register">Register</a></button>
+            <form class="phone-form mb-3" method="post" action="/login">
+                <div class="row justify-content-center py-2">
+                    <input type="tel" name="phone" class="form-control col-6 align-self-center" placeholder="Phone #" required>
                 </div>
-            </div>
+
+                <div class="row justify-content-center py-2">
+                    <input type="password" name="pass" class="form-control col-6 align-self-center" placeholder="Password" required>
+                </div>
+
+                <div class="row justify-content-center py-2">
+                    <button class="btn btn-primary col-md-2"><a class="text-light" href="/dashboard/8313248123">Login</a></button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

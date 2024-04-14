@@ -72,3 +72,24 @@ h1 {
 
 }
 
+.img-fluid {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+.img-round {
+  border-radius: 100%;
+  overflow: hidden;
+  margin: auto;
+  max-width: 15rem;
+  border: 2px solid rgb(152 157 173 / 50%);
+
+}
+
+.post-title {
+    text-align: start;
+    padding-left: 1rem;
+}
+
+
