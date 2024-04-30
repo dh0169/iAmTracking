@@ -27,6 +27,26 @@ public class iAmTracking {
         return "index";
     }
 
+    @RequestMapping("/login")
+    public String login(Model model){
+        return "login";
+    }
+
+    @RequestMapping("/register")
+    public String register(Model model) {
+        return "register";
+    }
+
+    @RequestMapping("/dashboard/{phoneNum}")
+    public String dashboard(@PathVariable("phoneNum") String phoneNum, Model model) {
+        model.addAttribute("msg", "Success! Please check your phone for a link");
+        return "dashboard";
+    }
+
+    @RequestMapping("/profile/{phoneNum}")
+    public String profile(@PathVariable("phoneNum") String phoneNum, Model model) {
+        return "dashboard";
+    }
 
     @PostMapping("/subscribed")
     public String subscribed(@RequestParam long phone, RedirectAttributes ra) {
@@ -54,4 +74,8 @@ public class iAmTracking {
         return "redirect:/journalDashboard"; // Redirect to the journal dashboard page
     }
 
+    @RequestMapping("/timeline")
+    public String timeline(Model model) {
+        return "timeline";
+    }
 }
