@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>iAmTracking</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="journalDashboard.css">
+</head>
+<body>
+
+<!-- every time you create a new page, add this navBar -->
+<nav class="navbar navbar-dark bg-dark flex-column">
+    <span class="navbar-brand mb-0 h1">Navigation Bar</span>
+    <ul class="navbar-nav mr-auto">
+        <li class="nav-item">
+            <a class="nav-link" href="#">Journal Dashboard</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#">Messages (empty)</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#">Planner (empty)</a>
+        </li>
+        <ul class="navbar-nav second-nav">
+            <li class="nav-item">
+                <a class="nav-link" href="#">Profile (empty)</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">Settings (empty)</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">Logout (empty)</a>
+            </li>
+        </ul>
+    </ul>
+</nav>
+
+
+<div class="container text-center">
+    <div class="row justify-content-center align-items-left" style="max-height: 100vh;">
+        <div class="col-md-6">
+            <h1><strong>iAmTracking</strong></h1>
+            <p class="tagline mb-4 text-left">Welcome <span th:text="${phoneNumber}">[Phone #]</span>! </p>
+            <!-- Thymeleaf conditional for error message -->
+            <div th:if="${msg}" class="message">
+                <p th:text="${msg}"></p>
+            </div>
+            <!-- Input and Output Fields -->
+            <div class="row">
+                <div class="col-md-12">
+                    <label for="calendarDate">Which journal entry would you like to view?</label>
+                    <input type="date" id="calendarDate" name="calendarDate">
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <button onclick="updateJournal()" class="btn btn-primary">View Entry</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <label for="outputText">Journal Entry Viewer:</label>
+                    <!-- Apply CSS to style the first line of text -->
+                    <textarea id="outputText" rows="20" cols="70" readonly style="text-align: center;">
+                        [[${journalEntry}]]
+                    </textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    #outputText::first-line {
+        font-weight: bold;
+    }
+</style>
+
+
+<script>
+    function updateJournal() {
+        var calendarDateValue = document.getElementById("calendarDate").value;
+        var formattedDate = formatDate(calendarDateValue); // Format the date
+
+        // Construct the message
+        var message = "Viewing Entry of " + formattedDate;
+
+        // Set the message as the value of the textarea
+        document.getElementById("outputText").value = message;
+    }
+
+    function formatDate(date) {
+        var parts = date.split("-");
+        return parts[1] + "/" + parts[2] + "/" + parts[0]; // Assuming the date format is YYYY-MM-DD
+    }
+</script>
+
+<!-- Bootstrap JS, Popper.js, and jQuery -->
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+</body>
+</html>

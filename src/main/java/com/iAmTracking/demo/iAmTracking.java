@@ -1,5 +1,6 @@
 package com.iAmTracking.demo;
 
+import jakarta.servlet.http.HttpSession;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -10,6 +11,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.io.*;
+import java.time.LocalDate;
 
 @Controller
 @SpringBootApplication
@@ -27,33 +29,29 @@ public class iAmTracking {
 
 
     @PostMapping("/subscribed")
-    //RequestBody must be filled or will return 400. puts entire body into variable
-    //RequestParam just takes in a single parameter and throws a 400 if wrong type, i.e long
-    public String subscribed(@RequestParam long phone, Model model, RedirectAttributes ra) {
-        FileWriter writer;
-        try {
-            //phone = phone.substring(phone.indexOf("=") + 1); //TODO might throw an error. Find better way.
-            //Integer.parseInt(phone); // TODO parse phone using regex
-            File emailList = ResourceUtils.getFile("email-list.txt");
-            if (!emailList.exists()) {
-                writer = new FileWriter(emailList);
-            } else {
-                writer = new FileWriter(emailList, true); // Append mode
-            }
+    public String subscribed(@RequestParam long phone, RedirectAttributes ra) {
+        // Add phone number as a flash attribute for redirect
+        ra.addFlashAttribute("phoneNumber", phone);
+        return "redirect:/journalDashboard";
+    }
 
-            writer.write(String.format("%s\n", phone));
-            writer.close();
-        }catch (NumberFormatException e){
-            ra.addFlashAttribute("msg", "Please provide phone number only.");
-            return "redirect:/";
-
-        }catch (Exception e){
-            e.printStackTrace();
-            ra.addFlashAttribute("msg", "An error occurred.");
+    @GetMapping("/journalDashboard")
+    public String journalDashboard(Model model, @ModelAttribute("phoneNumber") Long phoneNumber) {
+        // Pass phone number to the view model
+        if (phoneNumber != null) {
+            model.addAttribute("phoneNumber", phoneNumber);
         }
+        return "journalDashboard";
+    }
 
-        model.addAttribute("msg", "Success! Please check your phone for a link");
-        return "subscribed";
+
+    @PostMapping("/retrieveJournalEntry")
+    public String retrieveJournalEntry(@RequestParam("entryDate") LocalDate entryDate,
+                                       @RequestParam("phoneNumber") String phoneNumber) {
+        System.out.println("Entry Date: " + entryDate);
+        System.out.println("Phone Number: " + phoneNumber);
+
+        return "redirect:/journalDashboard"; // Redirect to the journal dashboard page
     }
 
 }
