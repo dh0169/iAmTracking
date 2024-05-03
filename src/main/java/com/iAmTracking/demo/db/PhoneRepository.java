@@ -1,7 +1,6 @@
 package com.iAmTracking.demo.db;
 
 import com.iAmTracking.demo.PhoneUser;
-import com.iAmTracking.demo.User;
 
 import java.util.HashMap;
 import java.util.Map;

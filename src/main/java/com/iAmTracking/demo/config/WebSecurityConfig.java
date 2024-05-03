@@ -10,6 +10,7 @@ import com.iAmTracking.demo.db.OTPRepository;
 import com.iAmTracking.demo.db.PhoneRepository;
 import com.iAmTracking.demo.db.PhoneUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -30,8 +31,12 @@ import java.util.Map;
 @Configuration
 @EnableWebSecurity
 public class WebSecurityConfig{
-    private final String SMS_API_URL = "https://052f-172-56-208-80.ngrok-free.app/sms/";
-    private final String SMS_API_KEY = "K2heeixGWD0ofCw4Q219bkRjK3o3I294T3QmV0xEbj4hdiVLRj0oXkMqVEZ1ZAo=";
+
+    @Value("${spring.datasource.SMS_API_URL}")
+    private String SMS_API_URL;
+
+    @Value("${spring.datasource.SMS_API_KEY}")
+    private String SMS_API_KEY;
 
 
     @Bean
