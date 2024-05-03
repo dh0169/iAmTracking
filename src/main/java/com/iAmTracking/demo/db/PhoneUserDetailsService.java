@@ -2,9 +2,6 @@ package com.iAmTracking.demo.db;
 
 import com.iAmTracking.demo.Message;
 import com.iAmTracking.demo.PhoneUser;
-import com.iAmTracking.demo.User;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;

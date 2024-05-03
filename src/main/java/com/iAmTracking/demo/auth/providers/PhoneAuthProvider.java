@@ -1,8 +1,6 @@
 package com.iAmTracking.demo.auth.providers;
 
 import com.iAmTracking.demo.OneTimePasscode;
-import com.iAmTracking.demo.PhoneUser;
-import com.iAmTracking.demo.User;
 import com.iAmTracking.demo.auth.tokens.PhoneNumberAuthToken;
 import com.iAmTracking.demo.db.OTPRepository;
 import com.iAmTracking.demo.db.PhoneUserDetailsService;
