@@ -7,7 +7,7 @@
 
     <!-- Bootstrap CSS -->
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="stylesheet" type="text/css" href="/src/style.css">
 </head>
 <body>
 <div class="container text-center">
@@ -21,18 +21,11 @@
             <p class="tagline mb-4">Your virtual reminder assistant. Powered by GPT-4</p>
 
 
-
-            <form class="phone-form mb-3" method="post" action="/login">
-                <div class="row justify-content-center py-2">
-                    <input type="tel" name="phone" class="form-control col-6 align-self-center" placeholder="Phone #" required>
-                </div>
-
-                <div class="row justify-content-center py-2">
-                    <input type="password" name="pass" class="form-control col-6 align-self-center" placeholder="Password" required>
-                </div>
-
-                <div class="row justify-content-center py-2">
-                    <button class="btn btn-primary col-md-2"><a class="text-light" href="/dashboard/8313248123">Login</a></button>
+            <form class="phone-form mb-3" th:action="@{/login}" method="post">
+                <div class="row justify-content-center">
+                    <input type="tel" name="phone" class="form-control col-md-8 align-self-center" placeholder="Enter your Phone #" required th:value= "${phone}" style="display: none;">
+                    <input type="tel" name="otp" class="form-control col-md-8 align-self-center" placeholder="Enter OTP Code" >
+                    <button type="submit" class="btn btn-primary col-md-2">Submit</button>
                 </div>
             </form>
         </div>

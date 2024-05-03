@@ -7,7 +7,7 @@
 
     <!-- Bootstrap CSS -->
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="stylesheet" type="text/css" href="/src/style.css">
 </head>
 <body>
 <div class="container text-center">
@@ -20,14 +20,12 @@
             <h1><strong>iAmTracking</strong></h1>
             <p class="tagline mb-4">Your virtual reminder assistant. Powered by GPT-4</p>
 
-
-
-            <div class="phone-form mb-3" >
+            <form class="phone-form mb-3" th:action="@{/}" method="post">
                 <div class="row justify-content-center">
-                    <input type="tel" name="phone" class="form-control col-md-8 align-self-center" placeholder="Enter your Phone #" required value="4081231234">
+                    <input type="tel" name="phone" class="form-control col-md-8 align-self-center" placeholder="Enter your Phone #">
                     <button type="submit" class="btn btn-primary col-md-2">Submit</button>
                 </div>
-            </div>
+            </form>
         </div>
     </div>
 </div>
