@@ -1,9 +1,10 @@
 package com.iAmTracking.demo;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.Scanner;
+import java.util.*;
 
 public class SupabaseUserReg {
     private static final String SUPABASE_URL = "https://pzzbasaitpeaelgtbkbw.supabase.co";
@@ -39,4 +40,35 @@ public class SupabaseUserReg {
         scanner.close();
         connection.disconnect();
     }
+
+    /*
+    Can you create these functions in SupabaseUserReg.java?
+    They should interact with the supabase db.
+
+    createNewUser(String number) -> create new PhoneUser in db and return user or Null on fail;
+    findByPhone(String number) -> find PhoneUser in db and return new PhoneUser or Null on fail;
+    saveUser(PhoneUser user) -> Save user to db and return the saved user or Null on fail;
+
+
+    Here is what my PhoneUser class looks like. This should help when you create new PhoneUser objects
+
+    public class PhoneUser{
+        private String phoneNum;
+        private Map<Date, ArrayList<Message>> conversations; //Conversation with ChatGPT
+
+        public PhoneUser(String phoneNum, Map<Date, ArrayList<Message>> conversations)
+
+        public PhoneUser(PhoneUser user)
+
+        public void setPhoneNum(String phoneNum)
+
+        public void setConversations(Map<Date, ArrayList<Message>> conversations)
+
+        public String getPhoneNum()
+
+        public Map<Date, ArrayList<Message>> getConversations()
+    }
+
+    */
+
 }
