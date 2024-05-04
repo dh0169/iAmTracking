@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.iAmTracking.demo.Message;
 import com.iAmTracking.demo.OneTimePasscode;
 import com.iAmTracking.demo.PhoneUser;
+import com.iAmTracking.demo.SMSListener;
 import com.iAmTracking.demo.auth.filters.PhoneAuthFilter;
 import com.iAmTracking.demo.db.OTPRepository;
 import com.iAmTracking.demo.db.PhoneRepository;
@@ -121,15 +122,13 @@ public class iAmTracking {
             model.addAttribute("phoneNumber", phoneNumber);
             PhoneUser phoneUser = this.phoneRepository.findByPhone(phoneNumber);
 
-            if(phoneUser != null){
-                try {
-                    model.addAttribute("messages", phoneUser.getConversations().get(LocalDate.now()));
-                } catch (Exception e) {
-                    System.err.println("Error converting conversations to JSON: " + e.getMessage());
-                    model.addAttribute("msg", "Error loading conversations");
-                }
+            if(phoneUser == null){
+                phoneUser = phoneRepository.createNewUser(phoneNumber);
+                smsApi.sendSMS(phoneUser.getPhoneNum(), "Welcome to iAmTracking! I am your friendly AI Powered assistant. Please text me anything you may need help with. Thanks!");
             }
 
+
+            model.addAttribute("messages", phoneUser.getConversations().get(LocalDate.now()));
 
         }
 
