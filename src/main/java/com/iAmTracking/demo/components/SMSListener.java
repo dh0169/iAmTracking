@@ -2,23 +2,21 @@ package com.iAmTracking.demo;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.iAmTracking.demo.auth.filters.PhoneAuthFilter;
 import com.iAmTracking.demo.db.PhoneRepository;
+import com.iAmTracking.demo.service.SMSApi;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Scanner;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class SMSListener {
@@ -66,6 +64,11 @@ public class SMSListener {
                 connection.disconnect();
 
                 List<Message> newMessages = objectMapper.readValue(responseBody.toString(), new TypeReference<List<Message>>() {});
+
+                for (Message msg : newMessages){
+                    msg.setNumber(PhoneAuthFilter.obtainPhoneNumber(msg.getNumber()));
+                }
+
                 if (!isSameContent(lastMessages, newMessages)) {
                     performActionOnNewMessages(newMessages);
                     lastMessages = new ArrayList<>(newMessages);  // Update the lastMessages list
@@ -81,21 +84,79 @@ public class SMSListener {
 
 
     private void performActionOnNewMessages(List<Message> messages) {
-        for (Message message : messages) {
-            // Only process messages of type "inbox"
-            if ("inbox".equals(message.getType())) {
-                System.out.println("Users: " + this.phoneRepository);
-                // Extract phone number and update corresponding PhoneUser
-                String phoneNumber = message.getNumber();
-                PhoneUser user = phoneRepository.findByPhone(phoneNumber);
-                if (user == null) {
-                    user = phoneRepository.createNewUser(phoneNumber);
-                }
-                // Here you can update the PhoneUser object as needed
-                phoneRepository.saveUser(user);
+
+        /*
+
+        We got a giant list of message and I want to update each user with new messages.
+         */
+        String phoneNumber = PhoneAuthFilter.obtainPhoneNumber(messages.get(0).getNumber());
+        PhoneUser user = phoneRepository.findByPhone(phoneNumber);
+        ConcurrentHashMap<LocalDate, List<Message>> newMsgs = new ConcurrentHashMap<>();
+
+
+        for (int i = 1; i < messages.size(); i++) {
+            Message message = messages.get(i);
+            System.out.println("\n\n"+message.getNumber()+"\n\n");
+
+
+            if (user == null) {
+                // If the user doesn't exist, create a new user.
+                user = phoneRepository.createNewUser(phoneNumber);
             }
+
+//            LocalDate currLocalDate = message.getReceived().toLocalDate();
+//            if(newMsgs.get(currLocalDate) == null){
+//                newMessageList = Collections.synchronizedList(new ArrayList<Message>());
+//                newMsgs.put(currLocalDate, newMessageList);
+//            }
+//
+//            newMsgs.get(currLocalDate).add(message);
+
+
+
+            // Add the message to the user's conversation map. You might need to adjust the key.
+            // Here, I use the message's received timestamp. Adjust according to your application's needs.
+            LocalDateTime messageDateTime = message.getReceived(); // Ensure this is parsed or set correctly in your message object.
+            List<Message> userMsgsOnDate = newMsgs.get(messageDateTime.toLocalDate());
+            if( userMsgsOnDate != null && !userMsgsOnDate.contains(message)){
+                userMsgsOnDate.add(message);
+            }else if(userMsgsOnDate == null){
+                userMsgsOnDate = new ArrayList<Message>();
+                userMsgsOnDate.add(message);
+            }
+
+            newMsgs.put(messageDateTime.toLocalDate(), userMsgsOnDate);
+
+
+            //for each localdate key in the newMsg, create new list and add all with same thread id. update userMsgsOnDate.updateConversation.
+
+
+
+            // Save the updated user in the repository.
         }
+        List<Message> specificPhoneNumMsgs;
+        for (LocalDate key : newMsgs.keySet()) {
+            specificPhoneNumMsgs = Collections.synchronizedList(new ArrayList<>());
+
+            List<Message> msgsOnDate = newMsgs.get(key);
+            for (Message msg : msgsOnDate){
+                if (msg.getNumber().equals(phoneNumber)){
+                    System.out.println("Adding msg to phoneNumber :" + phoneNumber);
+                    specificPhoneNumMsgs.add(msg);
+                }
+            }
+
+
+            user.updateConversation(key, specificPhoneNumMsgs);
+
+            this.phoneRepository.saveUser(user);
+
+        }
+
+        // Optionally, log the updated state of users for verification or debugging.
+        System.out.println("Updated Users: " + phoneRepository);
     }
+
 
     private boolean isSameContent(List<Message> oldMessages, List<Message> newMessages) {
         if (oldMessages.size() != newMessages.size()) {

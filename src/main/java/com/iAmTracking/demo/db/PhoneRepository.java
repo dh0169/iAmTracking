@@ -1,5 +1,6 @@
 package com.iAmTracking.demo.db;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iAmTracking.demo.PhoneUser;
 
 import java.util.HashMap;
@@ -33,6 +34,10 @@ public class PhoneRepository {
     }
 
     public PhoneUser createNewUser(String phone){
+        if(this.users.get(phone) != null){
+            return null; //User exists
+        }
+
         PhoneUser tmp = new PhoneUser(phone);
         this.users.put(phone, tmp);
 
@@ -42,5 +47,28 @@ public class PhoneRepository {
     public PhoneUser saveUser(PhoneUser user){
         this.users.put(user.getPhoneNum(), user);
         return user;
+    }
+
+
+
+    @Override
+    public String toString() {
+
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+
+            //Need this to parse date or else we get error
+            /*
+            * Error converting to JSON: Java 8 date/time type `java.time.LocalDateTime` not supported by default:
+            * add Module "com.fasterxml.jackson.datatype:jackson-datatype-jsr310" to enable
+            * */
+            mapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());  // Register the JavaTimeModule
+            mapper.disable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS); // Optional: disable writing dates as timestamps
+
+
+            return mapper.writeValueAsString(this.users);
+        } catch (Exception e) {
+            return "Error converting to JSON: " + e.getMessage();
+        }
     }
 }

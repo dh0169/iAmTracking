@@ -2,10 +2,12 @@ package com.iAmTracking.demo;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-public class Message {
+public class Message implements Comparable<Message>{
 
     @JsonProperty("_id")
     private Integer id;
@@ -13,6 +15,7 @@ public class Message {
     @JsonProperty("threadid")
     private Integer threadId;
 
+    @JsonProperty("type")
     private String type;
 
     @JsonProperty("number")
@@ -103,14 +106,27 @@ public class Message {
     @Override
     public String toString(){
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        return "{\n" +
-                "  \"threadid\": " + threadId + ",\n" +
-                "  \"type\": \"" + type + "\",\n" +
-                "  \"read\": " + read + ",\n" +
-                "  \"number\": \"" + number + "\",\n" +
-                "  \"received\": \"" + formatter.format(received) + "\",\n" +
-                "  \"body\": \"" + body + "\",\n" +
-                "  \"_id\": " + id + "\n" +
-                "}";
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+
+            //Need this to parse date or else we get error
+            /*
+             * Error converting to JSON: Java 8 date/time type `java.time.LocalDateTime` not supported by default:
+             * add Module "com.fasterxml.jackson.datatype:jackson-datatype-jsr310" to enable
+             * */
+            mapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());  // Register the JavaTimeModule
+            mapper.disable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS); // Optional: disable writing dates as timestamps
+
+
+            return mapper.writeValueAsString(this);
+        } catch (Exception e) {
+            return "Error converting to JSON: " + e.getMessage();
+        }
     }
+
+    @Override
+    public int compareTo(Message other) {
+        return this.id.compareTo(other.id);
+    }
+
 }

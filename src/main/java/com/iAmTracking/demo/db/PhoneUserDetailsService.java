@@ -7,8 +7,10 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class PhoneUserDetailsService implements UserDetailsService {
@@ -24,11 +26,11 @@ public class PhoneUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         PhoneUser currentUser = this.phoneRepo.findByPhone(username);
         if(currentUser == null){
-                HashMap<LocalDateTime, ArrayList<Message>> convo = new HashMap<>();
-                ArrayList<Message> msgList = new ArrayList<>();
-                msgList.add(new Message("8312060419", "Howdy partner"));
+                ConcurrentHashMap<LocalDate, List<Message>> convo = new ConcurrentHashMap<>();
+                List<Message> msgList = Collections.synchronizedList(new ArrayList<Message>());
+                msgList.add(new Message(username, "This is a new user"));
 
-                LocalDateTime now = LocalDateTime.now();
+                LocalDate now = LocalDate.now();
 
                 convo.put(now, msgList);
                 currentUser = new PhoneUser(username, convo);

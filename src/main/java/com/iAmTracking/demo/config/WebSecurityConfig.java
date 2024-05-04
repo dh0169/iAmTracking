@@ -1,15 +1,17 @@
 package com.iAmTracking.demo.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.iAmTracking.demo.OneTimePasscode;
 import com.iAmTracking.demo.PhoneUser;
-import com.iAmTracking.demo.SMSApi;
+import com.iAmTracking.demo.service.SMSApi;
 import com.iAmTracking.demo.auth.filters.PhoneAuthFilter;
 import com.iAmTracking.demo.auth.handlers.PhoneAuthenticationHandler;
 import com.iAmTracking.demo.auth.providers.PhoneAuthProvider;
 import com.iAmTracking.demo.db.OTPRepository;
 import com.iAmTracking.demo.db.PhoneRepository;
 import com.iAmTracking.demo.db.PhoneUserDetailsService;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,10 +20,14 @@ import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.*;
+import org.springframework.security.web.authentication.logout.HeaderWriterLogoutHandler;
+import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
+import org.springframework.security.web.header.writers.ClearSiteDataHeaderWriter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import java.util.HashMap;
@@ -41,6 +47,7 @@ public class WebSecurityConfig{
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
         http
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
@@ -56,17 +63,30 @@ public class WebSecurityConfig{
                 .formLogin(login -> login
                         .loginPage("/")
                         .loginProcessingUrl("/login")
-                );
+                )
+                .logout(logout -> logout
+                        .addLogoutHandler(clearSiteData())
+                        .logoutSuccessUrl("/?logout")
+                        .permitAll()
+                )
+
+        ;
 
         return http.build();
+    }
+
+    @Bean
+    HeaderWriterLogoutHandler clearSiteData(){
+        HeaderWriterLogoutHandler clearSiteData = new HeaderWriterLogoutHandler(new ClearSiteDataHeaderWriter(ClearSiteDataHeaderWriter.Directive.ALL));
+        return clearSiteData;
     }
 
     @Bean
     public PhoneAuthFilter oneTimePasswordAuthFilter(AuthenticationManager authMan, PhoneUserDetailsService phoneUserDetailsService){
         PhoneAuthFilter  filter = new PhoneAuthFilter(new AntPathRequestMatcher("/login", "POST"));
         filter.setAuthenticationManager(authMan);
-        filter.setAuthenticationSuccessHandler(new PhoneAuthenticationHandler("/journalDashboard", securityContextRepository()));  // Redirect on success
-        filter.setAuthenticationFailureHandler(new PhoneAuthenticationHandler("/logout", securityContextRepository()));
+        filter.setAuthenticationSuccessHandler(new PhoneAuthenticationHandler("/journalDashboard", securityContextRepository(), otpRepository()));  // Redirect on success
+        filter.setAuthenticationFailureHandler(new PhoneAuthenticationHandler("/logout", securityContextRepository(), otpRepository()));
 
         return filter;
     }
@@ -114,15 +134,24 @@ public class WebSecurityConfig{
         // the raw security answer is "smith"
         String encodedSecurityAnswer = "{bcrypt}$2a$10$JIXMjAszy3RUu8y5T0zH0enGJCGumI8YE.K7w3wsM5xXDfeVIsJhq";
 
-        //PhoneUser customUser = new PhoneUser("8312060419");
-        Map<String, PhoneUser> phoneToCustomUser = new HashMap<>();
-        //phoneToCustomUser.put(customUser.getPhoneNum(), customUser);
-        return new PhoneRepository(phoneToCustomUser);
+//        PhoneUser customUser = new PhoneUser("8312060419");
+//        Map<String, PhoneUser> phoneToCustomUser = new HashMap<>();
+//        phoneToCustomUser.put(customUser.getPhoneNum(), customUser);
+        return new PhoneRepository();
     }
 
     @Bean
     OTPRepository otpRepository(){
         return new OTPRepository();
+    }
+
+    @Bean
+    ObjectMapper objectMapper(){
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());  // Register the JavaTimeModule
+        mapper.disable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS); // Optional: disable writing dates as timestamps
+
+        return mapper;
     }
 
     @Bean
