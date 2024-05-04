@@ -101,7 +101,8 @@ public class SMSListener {
 
             if (user == null) {
                 // If the user doesn't exist, create a new user.
-                user = phoneRepository.createNewUser(phoneNumber);
+                continue;
+                //user = phoneRepository.createNewUser(phoneNumber);
             }
 
 //            LocalDate currLocalDate = message.getReceived().toLocalDate();
