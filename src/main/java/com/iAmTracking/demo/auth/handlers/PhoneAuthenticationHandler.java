@@ -36,9 +36,10 @@ public class PhoneAuthenticationHandler implements AuthenticationSuccessHandler,
     private final AuthenticationFailureHandler failureHandler;
 
     private final SecurityContextRepository securityContextRepository;
+    private final OTPRepository otpRepository;
 
 
-    public PhoneAuthenticationHandler(String url, SecurityContextRepository securityContextRepository) {
+    public PhoneAuthenticationHandler(String url, SecurityContextRepository securityContextRepository, OTPRepository otpRepository) {
         SimpleUrlAuthenticationSuccessHandler successHandler = new SimpleUrlAuthenticationSuccessHandler(url);
         successHandler.setAlwaysUseDefaultTargetUrl(true);
         this.successHandler = successHandler;
@@ -49,6 +50,7 @@ public class PhoneAuthenticationHandler implements AuthenticationSuccessHandler,
 
         this.securityContextRepository = securityContextRepository;
 
+        this.otpRepository = otpRepository;
     }
 
     @Override
@@ -71,7 +73,14 @@ public class PhoneAuthenticationHandler implements AuthenticationSuccessHandler,
                                        Authentication authentication) throws IOException, ServletException {
         SecurityContext context = SecurityContextHolder.getContext();
         if (authentication instanceof PhoneNumberAuthToken){
-            PhoneNumberAuthToken token = new PhoneNumberAuthToken((String) authentication.getPrincipal(), (String) authentication.getCredentials());
+            String phoneNumber = (String) authentication.getPrincipal();
+            String otp = (String) authentication.getCredentials();
+
+            OneTimePasscode otpCode =  this.otpRepository.removeCode(phoneNumber);
+            System.out.println("\n\n\nSuccessfull Login, removing OTPCode: " + otpCode.getCode());
+
+
+            PhoneNumberAuthToken token = new PhoneNumberAuthToken(phoneNumber, otp);
             token.setAuthenticated(true);
             context.setAuthentication(token);
             this.securityContextRepository.saveContext(context, request, response);

@@ -43,30 +43,23 @@
     <div class="row justify-content-center align-items-left" style="max-height: 100vh;">
         <div class="col-md-6">
             <h1><strong>iAmTracking</strong></h1>
-            <p class="tagline mb-4 text-left">Welcome <span th:text="${phoneNumber}">[Phone #]</span>! </p>
-            <!-- Thymeleaf conditional for error message -->
-            <div th:if="${msg}" class="message">
-                <p th:text="${msg}"></p>
+            <p class="tagline mb-4 text-left">Welcome <span th:text="${phoneNumber}">[Phone #]</span>!</p>
+            <div class="chat-container" id="chat-container"></div>
+            <div>
+                <label for="calendarDate">Select Date:</label>
+                <input type="date" id="calendarDate">
+                <button onclick="updateJournal()" class="btn btn-primary">View Entry</button>
             </div>
-            <!-- Input and Output Fields -->
-            <div class="row">
-                <div class="col-md-12">
-                    <label for="calendarDate">Which journal entry would you like to view?</label>
-                    <input type="date" id="calendarDate" name="calendarDate">
-                    <div class="row mt-3">
-                        <div class="col-md-12">
-                            <button onclick="updateJournal()" class="btn btn-primary">View Entry</button>
+            <div class="row mt-2 rounded" style="background: white; ">
+                <div class="col-md-12 overflow-auto" style="max-height: 75vh">
+                    <label for="outputText">Chatbox:</label>
+                    <div id="outputText">
+                        <!-- Messages will be dynamically added here -->
+                        <div class="message"  th:classappend="${message.type}" th:each="message : ${messages}">
+                            <div th:text="${message.body}"></div>
+                            <div class="timestamp" th:text="${message.received}"></div>
                         </div>
                     </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-md-12">
-                    <label for="outputText">Journal Entry Viewer:</label>
-                    <!-- Apply CSS to style the first line of text -->
-                    <textarea id="outputText" rows="20" cols="70" readonly style="text-align: center;">
-                        [[${journalEntry}]]
-                    </textarea>
                 </div>
             </div>
         </div>
@@ -80,23 +73,83 @@
 </style>
 
 
+
+
 <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const jsonData = document.getElementById('journalEntryJson').textContent;
+<!--        const messages = JSON.parse(jsonData);-->
+        console.log(jsonData); //Put in date from date selecter and update
+        const chatContainer = document.getElementById('outputText');
+        chatContainer.textContent = "";
+        document.getElementById('journalEntryJson').textContent = "";
+
+<!--        messages['2024-05-03'].forEach(msg => {-->
+<!--            const messageElement = document.createElement('div');-->
+<!--            messageElement.classList.add('message', msg.type === 'sent' ? 'sent' : 'inbox');-->
+<!--            messageElement.innerHTML = `-->
+<!--                <div>${msg.body}</div>-->
+<!--                <div class="timestamp">${msg.received}</div>-->
+<!--            `;-->
+<!--            chatContainer.appendChild(messageElement);-->
+<!--        });-->
+    });
+
     function updateJournal() {
-        var calendarDateValue = document.getElementById("calendarDate").value;
-        var formattedDate = formatDate(calendarDateValue); // Format the date
-
-        // Construct the message
-        var message = "Viewing Entry of " + formattedDate;
-
-        // Set the message as the value of the textarea
-        document.getElementById("outputText").value = message;
-    }
-
-    function formatDate(date) {
-        var parts = date.split("-");
-        return parts[1] + "/" + parts[2] + "/" + parts[0]; // Assuming the date format is YYYY-MM-DD
+        const calendarDate = document.getElementById("calendarDate").value;
+        // Implement the fetch call here to update the chat based on the selected date
     }
 </script>
+
+<style>
+    /* Chatbox styling */
+    #chatbox {
+        background-color: #ffddc1; /* Warm orange background */
+        border: 1px solid #e38d6d; /* Border color */
+        border-radius: 10px;
+        padding: 10px;
+        overflow-y: auto; /* Enable vertical scrolling */
+        max-height: 400px; /* Limit height to prevent excessive scrolling */
+    }
+
+    /* Styling for incoming messages */
+    .message.sent {
+        background-color: #f7e0d4; /* Light orange */
+        border-radius: 10px;
+        padding: 8px;
+        margin-bottom: 10px;
+        text-align: left;
+        max-width: 70%; /* Smaller width */
+        float: left; /* Align to the left */
+        clear: both; /* Clear the float */
+    }
+
+    /* Styling for outgoing messages */
+    .message.inbox {
+        background-color: #ffe8d6; /* Light peach */
+        border-radius: 10px;
+        padding: 8px;
+        margin-bottom: 10px;
+        text-align: right;
+        max-width: 70%; /* Smaller width */
+        float: right; /* Align to the right */
+        clear: both; /* Clear the float */
+    }
+
+    /* Styling for message text */
+    .message div {
+        font-size: 14px;
+        color: #333;
+        word-wrap: break-word; /* Allow long words to break */
+    }
+
+    /* Styling for timestamp */
+    .timestamp {
+        font-size: 12px;
+        color: #777;
+    }
+</style>
+
 
 <!-- Bootstrap JS, Popper.js, and jQuery -->
 <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>

@@ -1,7 +1,9 @@
-package com.iAmTracking.demo;
+package com.iAmTracking.demo.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.iAmTracking.demo.Message;
+
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
