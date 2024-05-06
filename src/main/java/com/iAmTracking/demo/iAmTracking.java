@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.iAmTracking.demo.Message;
 import com.iAmTracking.demo.OneTimePasscode;
 import com.iAmTracking.demo.PhoneUser;
-import com.iAmTracking.demo.SMSListener;
+import com.iAmTracking.demo.components.SMSListener;
 import com.iAmTracking.demo.auth.filters.PhoneAuthFilter;
 import com.iAmTracking.demo.db.OTPRepository;
 import com.iAmTracking.demo.db.PhoneRepository;
@@ -128,13 +128,17 @@ public class iAmTracking {
             }
 
 
-            model.addAttribute("messages", phoneUser.getConversations().get(LocalDate.now()));
+            //Create a post mapping for /journalDashboard that receives date as input and returns conversation
+            LocalDate now = LocalDate.now();
+            model.addAttribute("messages", phoneUser.getConversations().get(now));
+            model.addAttribute("date", now);
 
         }
 
-        System.out.println(this.phoneRepository);
         return "journalDashboard";
     }
+
+
 
 
     @RequestMapping("/timeline")

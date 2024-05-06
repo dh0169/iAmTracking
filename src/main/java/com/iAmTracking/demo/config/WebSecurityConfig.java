@@ -15,6 +15,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -53,13 +54,10 @@ public class WebSecurityConfig{
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                         .sessionFixation().migrateSession()
                 )
-                .csrf().disable()
                 .authorizeHttpRequests((requests) -> requests
-                        .requestMatchers("/", "/login", "/src/**").permitAll() // Assuming /src/** are your static resources
                         .requestMatchers("/journalDashboard").authenticated() // Ensure that dashboard is protected
-                        .anyRequest().authenticated()
+                        .anyRequest().permitAll()
                 )
-                .addFilterAt(oneTimePasswordAuthFilter(authenticationManager(), phoneUserDetailsService()), UsernamePasswordAuthenticationFilter.class)
                 .formLogin(login -> login
                         .loginPage("/")
                         .loginProcessingUrl("/login")
@@ -69,6 +67,9 @@ public class WebSecurityConfig{
                         .logoutSuccessUrl("/?logout")
                         .permitAll()
                 )
+                .addFilterAt(oneTimePasswordAuthFilter(authenticationManager(), phoneUserDetailsService()), UsernamePasswordAuthenticationFilter.class)
+
+                .csrf().disable()
 
         ;
 

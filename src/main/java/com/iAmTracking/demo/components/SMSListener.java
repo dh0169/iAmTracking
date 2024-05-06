@@ -1,15 +1,25 @@
-package com.iAmTracking.demo;
+package com.iAmTracking.demo.components;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.iAmTracking.demo.Message;
+import com.iAmTracking.demo.PhoneUser;
 import com.iAmTracking.demo.auth.filters.PhoneAuthFilter;
 import com.iAmTracking.demo.db.PhoneRepository;
 import com.iAmTracking.demo.service.SMSApi;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RestController;
 
+import javax.net.ssl.HttpsURLConnection;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.time.LocalDate;
@@ -18,72 +28,57 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Component
+@RestController
 public class SMSListener {
 
-    private final String SMS_API_URL = "https://052f-172-56-208-80.ngrok-free.app/sms/";
-    private final String SMS_API_KEY = "K2heeixGWD0ofCw4Q219bkRjK3o3I294T3QmV0xEbj4hdiVLRj0oXkMqVEZ1ZAo=";
+    @Value("${spring.datasource.SMS_API_URL}")
+    private String SMS_API_URL;
+
+    @Value("${spring.datasource.SMS_API_KEY}")
+    private String SMS_API_KEY;
+
+    @Value("${spring.datasource.SMS_API_KEY}")
+    private String iAM_KEY;
+
 
     private final ObjectMapper objectMapper;
-    private List<Message> lastMessages = new ArrayList<>();
 
     private PhoneRepository phoneRepository;
 
     @Autowired
-    private SMSApi smsApi;
-
-    @Autowired
-    public SMSListener( ObjectMapper objectMapper, PhoneRepository phoneRepository, SMSApi smsApi) {
+    public SMSListener( ObjectMapper objectMapper, PhoneRepository phoneRepository) {
         this.objectMapper = objectMapper;
         this.phoneRepository = phoneRepository;
-        this.smsApi = smsApi;
     }
 
-    @Async
-    @Scheduled(fixedRate = 5000)  // every 5000 milliseconds (5 seconds)
-    public void checkForNewMessages() {
+
+
+    @PostMapping(value="/lsaGqZsUS9ttzw2qMtx6znYYu36Kr4", consumes ="application/json")
+    public ResponseEntity<String> receiveMessages(@RequestBody List<Message> newMessages, @RequestHeader("IAM_KEY") String apiKey) {
+        if (iAM_KEY.equals(apiKey)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid API Key");
+        }
+
         try {
-            URL url = new URL(SMS_API_URL + "list");
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("POST");
-            connection.setRequestProperty("Content-Type", "application/json");
-            connection.setRequestProperty("API_KEY", SMS_API_KEY);
-            connection.setDoOutput(true);
-
-            String requestBody = "";  // Construct request body if necessary
-            connection.getOutputStream().write(requestBody.getBytes());
-
-            int responseCode = connection.getResponseCode();
-            if (responseCode == HttpURLConnection.HTTP_OK) {
-                Scanner scanner = new Scanner(connection.getInputStream());
-                StringBuilder responseBody = new StringBuilder();
-                while (scanner.hasNextLine()) {
-                    responseBody.append(scanner.nextLine());
-                }
-                scanner.close();
-                connection.disconnect();
-
-                List<Message> newMessages = objectMapper.readValue(responseBody.toString(), new TypeReference<List<Message>>() {});
-
-                for (Message msg : newMessages){
-                    msg.setNumber(PhoneAuthFilter.obtainPhoneNumber(msg.getNumber()));
-                }
-
-                if (!isSameContent(lastMessages, newMessages)) {
-                    performActionOnNewMessages(newMessages);
-                    lastMessages = new ArrayList<>(newMessages);  // Update the lastMessages list
-                }
-            } else {
-                System.out.println("Failed to fetch messages. HTTP error code: " + responseCode);
+            for (Message msg : newMessages) {
+                msg.setNumber(PhoneAuthFilter.obtainPhoneNumber(msg.getNumber()));
             }
+
+            performActionOnNewMessages(newMessages);
+
+
+            return ResponseEntity.ok("Messages processed successfully.");
         } catch (Exception e) {
-            System.err.println("Failed to fetch new messages: " + e.getMessage());
+            System.err.println("Failed to process new messages: " + e.getMessage());
+            return ResponseEntity.status(500).body("Error processing messages");
+
         }
     }
 
 
-
     private void performActionOnNewMessages(List<Message> messages) {
+        if(messages.size() <= 0){ return; }
+
 
         /*
 
@@ -95,27 +90,17 @@ public class SMSListener {
 
 
         for (int i = 1; i < messages.size(); i++) {
-            Message message = messages.get(i);
-            System.out.println("\n\n"+message.getNumber()+"\n\n");
+            phoneNumber = PhoneAuthFilter.obtainPhoneNumber(messages.get(i).getNumber());
+            user = phoneRepository.findByPhone(phoneNumber);
 
+            Message message = messages.get(i);
 
             if (user == null) {
-                // If the user doesn't exist, create a new user.
+                // If the user doesn't exist, ignore the message(We can see messages).
                 continue;
-                //user = phoneRepository.createNewUser(phoneNumber);
             }
 
-//            LocalDate currLocalDate = message.getReceived().toLocalDate();
-//            if(newMsgs.get(currLocalDate) == null){
-//                newMessageList = Collections.synchronizedList(new ArrayList<Message>());
-//                newMsgs.put(currLocalDate, newMessageList);
-//            }
-//
-//            newMsgs.get(currLocalDate).add(message);
 
-
-
-            // Add the message to the user's conversation map. You might need to adjust the key.
             // Here, I use the message's received timestamp. Adjust according to your application's needs.
             LocalDateTime messageDateTime = message.getReceived(); // Ensure this is parsed or set correctly in your message object.
             List<Message> userMsgsOnDate = newMsgs.get(messageDateTime.toLocalDate());
@@ -139,16 +124,16 @@ public class SMSListener {
         for (LocalDate key : newMsgs.keySet()) {
             specificPhoneNumMsgs = Collections.synchronizedList(new ArrayList<>());
 
+
             List<Message> msgsOnDate = newMsgs.get(key);
             for (Message msg : msgsOnDate){
                 if (msg.getNumber().equals(phoneNumber)){
-                    System.out.println("Adding msg to phoneNumber :" + phoneNumber);
                     specificPhoneNumMsgs.add(msg);
                 }
             }
 
-
             user.updateConversation(key, specificPhoneNumMsgs);
+
 
             this.phoneRepository.saveUser(user);
 
