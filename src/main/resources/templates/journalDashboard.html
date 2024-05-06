@@ -47,11 +47,14 @@
             <div class="chat-container" id="chat-container"></div>
             <div>
                 <label for="calendarDate">Select Date:</label>
-                <input type="date" id="calendarDate">
+                <input th:if="${date}" type="date" id="calendarDate" th:value="${date}">
+
+                <input th:unless="${date}" type="date" id="calendarDate">
+
                 <button onclick="updateJournal()" class="btn btn-primary">View Entry</button>
             </div>
-            <div class="row mt-2 rounded" style="background: white; ">
-                <div class="col-md-12 overflow-auto" style="max-height: 75vh">
+            <div class="row mt-2 rounded overflow-auto" style="background: white; min-height: 70vh; min-width: 50vw" >
+                <div class="col-md-12 ">
                     <label for="outputText">Chatbox:</label>
                     <div id="outputText">
                         <!-- Messages will be dynamically added here -->
