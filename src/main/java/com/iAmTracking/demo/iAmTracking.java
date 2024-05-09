@@ -91,7 +91,6 @@ public class iAmTracking {
                 err = "OTP Expired\n";
                 this.otpRepository.removeCode(phone);
                 model.addAttribute("msg", err);
-
                 return "/";
             }else if(otp != null){
                 err = "OTP still active\n";

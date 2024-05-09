@@ -78,7 +78,7 @@
 
 <script>
      // JavaScript function to handle calendar change and perform POST request
-        function onCalendarChange() {
+        function getNewMessages() {
             // Get the calendar value (ISO date string yyyy-MM-dd)
             let dateValue = document.getElementById("calendarDate").value;
 
@@ -115,9 +115,24 @@
             });
         }
 
+        setInterval(getNewMessages, 10000); //Refresh the page every 10 seconds
+
     function updateJournal(msgList) {
-        //Using msgList, update the front end.
-    }
+    let chatContainer = $('#outputText');
+    chatContainer.empty(); // Clear existing messages
+
+    $.each(msgList, function(index, message) {
+        let msgDiv = $('<div></div>').addClass('message ' + message.type); // Apply 'sent' or 'inbox' styles
+
+        let msgBody = $('<div></div>').text(message.body);
+        msgDiv.append(msgBody);
+
+        let timestampDiv = $('<div></div>').addClass('timestamp').text(message.received);
+        msgDiv.append(timestampDiv);
+
+        chatContainer.append(msgDiv);
+    });
+}
 </script>
 
 <style>
@@ -130,6 +145,8 @@
         overflow-y: auto; /* Enable vertical scrolling */
         max-height: 400px; /* Limit height to prevent excessive scrolling */
     }
+
+
 
     /* Styling for incoming messages */
     .message.sent {
