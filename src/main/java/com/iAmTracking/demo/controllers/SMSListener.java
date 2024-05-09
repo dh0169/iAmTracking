@@ -32,13 +32,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @RestController
 public class SMSListener {
 
-    @Value("${spring.datasource.SMS_API_URL}")
-    private String SMS_API_URL;
-
-    @Value("${spring.datasource.SMS_API_KEY}")
-    private String SMS_API_KEY;
-
-    @Value("${spring.datasource.SMS_API_KEY}")
+    @Value("${spring.datasource.IAM_KEY}")
     private String iAM_KEY;
 
 
