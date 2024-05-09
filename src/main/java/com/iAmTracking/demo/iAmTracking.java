@@ -23,6 +23,7 @@ import org.springframework.web.client.HttpServerErrorException;
 import javax.net.ssl.HttpsURLConnection;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -159,14 +160,17 @@ public class iAmTracking {
 
         try {
             LocalDate date = LocalDate.parse(body.get("date"));
-            String json = objectMapper.writeValueAsString(phoneUser.getConversation(date));
+            String json = "[]";
+
+            if(phoneUser != null)
+                json = objectMapper.writeValueAsString(phoneUser.getConversation(date));
 
             return new ResponseEntity<String>(json, HttpStatus.OK);
         } catch (DateTimeParseException parseException) {
             return new ResponseEntity<String>("{ \"msg\" : \"invalid date format, should be yyyy-MM-dd\"}", HttpStatus.BAD_REQUEST);
         }catch (Exception e) {
             System.out.println("\n\n\n"+e);
-            return new ResponseEntity<String>("{Error occured, please check request and try again}", HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<String>("{Error occurred, please check request and try again}", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
