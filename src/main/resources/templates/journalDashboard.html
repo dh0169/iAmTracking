@@ -47,9 +47,9 @@
             <div class="chat-container" id="chat-container"></div>
             <div>
                 <label for="calendarDate">Select Date:</label>
-                <input th:if="${date}" type="date" id="calendarDate" th:value="${date}" onchange="onCalendarChange()">
+                <input th:if="${date}" type="date" id="calendarDate" th:value="${date}" onchange="getNewMessages()">
 
-                <input th:unless="${date}" type="date" id="calendarDate" onchange="onCalendarChange()">
+                <input th:unless="${date}" type="date" id="calendarDate" onchange="getNewMessages()">
 
             </div>
             <div class="row mt-2 rounded overflow-auto" style="background: white; min-height: 70vh; min-width: 50vw" >
@@ -115,7 +115,7 @@
             });
         }
 
-        setInterval(getNewMessages, 10000); //Refresh the page every 10 seconds
+        setInterval(getNewMessages, 15000); //Refresh the page every 15 seconds.
 
     function updateJournal(msgList) {
     let chatContainer = $('#outputText');
