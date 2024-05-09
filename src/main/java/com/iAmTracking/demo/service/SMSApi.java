@@ -3,14 +3,16 @@ package com.iAmTracking.demo.service;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iAmTracking.demo.Message;
+import org.springframework.http.ResponseEntity;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
-public class SMSApi {
+public class SMSApi implements APIMessenger{
 
     private String smsApiUrl;
     private String smsApiKey;
@@ -24,25 +26,19 @@ public class SMSApi {
 
     public boolean sendSMS(String number, String body) {
         try {
-            URL url = new URL(smsApiUrl + "send");
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("POST");
-            connection.setRequestProperty("Content-Type", "application/json");
-            connection.setRequestProperty("API_KEY", smsApiKey);
-            connection.setDoOutput(true);
+            // http://smsApi.com/ + send
+            String smsSendURL = this.smsApiUrl+"send";
 
+            HashMap<String, String> headers = new HashMap<>();
+            headers.put("Content-Type", "application/json");
+            headers.put("API_KEY", this.smsApiKey);
             String requestBody = "{\"msg\":{\"number\":\""+ number +"\", \"body\":\""+body+"\"}}";
-            connection.getOutputStream().write(requestBody.getBytes());
 
-            int responseCode = connection.getResponseCode();
+            ResponseEntity<String> connection = send(smsSendURL, requestBody, "POST", headers);
+
+            int responseCode = connection.getStatusCode().value();
             if (responseCode == HttpURLConnection.HTTP_OK) {
-                Scanner scanner = new Scanner(connection.getInputStream());
-                StringBuilder responseBody = new StringBuilder();
-                while (scanner.hasNextLine()) {
-                    responseBody.append(scanner.nextLine());
-                }
-                scanner.close();
-                connection.disconnect();
+                String responseBody = connection.getBody();
 
                 // Parse the response body to check the message
                 Map<String, String> responseMap = objectMapper.readValue(responseBody.toString(), new TypeReference<Map<String, String>>() {});
@@ -92,4 +88,6 @@ public class SMSApi {
         }
         return null;
     }
+
+
 }

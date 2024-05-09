@@ -3,6 +3,7 @@ package com.iAmTracking.demo.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iAmTracking.demo.OneTimePasscode;
 import com.iAmTracking.demo.PhoneUser;
+import com.iAmTracking.demo.service.GPTApi;
 import com.iAmTracking.demo.service.SMSApi;
 import com.iAmTracking.demo.auth.filters.PhoneAuthFilter;
 import com.iAmTracking.demo.auth.handlers.PhoneAuthenticationHandler;
@@ -44,6 +45,13 @@ public class WebSecurityConfig{
 
     @Value("${spring.datasource.SMS_API_KEY}")
     private String SMS_API_KEY;
+
+
+    @Value("${spring.datasource.SMS_API_URL}")
+    private String GPT_API_URL;
+
+    @Value("${spring.datasource.SMS_API_KEY}")
+    private String GPT_API_KEY;
 
 
     @Bean
@@ -112,32 +120,13 @@ public class WebSecurityConfig{
 
     @Bean
     PhoneRepository phoneRepository() {
-        // the hashed password was calculated using the following code
-        // the hash should be done up front, so malicious users cannot discover the
-        // password
-        // PasswordEncoder encoder =
-        // PasswordEncoderFactories.createDelegatingPasswordEncoder();
-        // String encodedPassword = encoder.encode("password");
-
-        // the raw password is "password"
-        String encodedPassword = "{bcrypt}$2a$10$h/AJueu7Xt9yh3qYuAXtk.WZJ544Uc2kdOKlHu2qQzCh/A3rq46qm";
-
-        // to sync your phone with the Google Authenticator secret, hand enter the value
-        // in base32Key
-        // String base32Key = "QDWSM3OYBPGTEVSPB5FKVDM3CSNCWHVK";
-        // Base32 base32 = new Base32();
-        // byte[] b = base32.decode(base32Key);
-        // String secret = Hex.encodeHexString(b);
-
-        String hexSecret = "80ed266dd80bcd32564f0f4aaa8d9b149a2b1eaa";
-        //String encrypted = new String(Hex.encode(encryptor.encrypt(hexSecret.getBytes())));
-
-        // the raw security answer is "smith"
-        String encodedSecurityAnswer = "{bcrypt}$2a$10$JIXMjAszy3RUu8y5T0zH0enGJCGumI8YE.K7w3wsM5xXDfeVIsJhq";
-
-//        PhoneUser customUser = new PhoneUser("8312060419");
-//        Map<String, PhoneUser> phoneToCustomUser = new HashMap<>();
-//        phoneToCustomUser.put(customUser.getPhoneNum(), customUser);
+//    Add sample data here if needed for demo.
+//    PhoneUser customUser = new PhoneUser("8312060419"); //Sample user
+//
+//
+//    Map<String, PhoneUser> phoneToCustomUser = new HashMap<>();
+//    phoneToCustomUser.put(customUser.getPhoneNum(), customUser);
+        
         return new PhoneRepository();
     }
 
@@ -145,6 +134,13 @@ public class WebSecurityConfig{
     OTPRepository otpRepository(){
         return new OTPRepository();
     }
+
+
+    @Bean
+    GPTApi gptApi(){
+        return new GPTApi(GPT_API_URL, GPT_API_KEY, objectMapper());
+    }
+
 
     @Bean
     ObjectMapper objectMapper(){
