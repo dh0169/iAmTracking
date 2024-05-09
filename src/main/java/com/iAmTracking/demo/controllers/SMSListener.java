@@ -1,4 +1,4 @@
-package com.iAmTracking.demo.components;
+package com.iAmTracking.demo.controllers;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -6,6 +6,7 @@ import com.iAmTracking.demo.Message;
 import com.iAmTracking.demo.PhoneUser;
 import com.iAmTracking.demo.auth.filters.PhoneAuthFilter;
 import com.iAmTracking.demo.db.PhoneRepository;
+import com.iAmTracking.demo.service.GPTApi;
 import com.iAmTracking.demo.service.SMSApi;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -45,10 +46,13 @@ public class SMSListener {
 
     private PhoneRepository phoneRepository;
 
+    private GPTApi gptApi;
+
     @Autowired
-    public SMSListener( ObjectMapper objectMapper, PhoneRepository phoneRepository) {
+    public SMSListener( ObjectMapper objectMapper, PhoneRepository phoneRepository, GPTApi gptApi) {
         this.objectMapper = objectMapper;
         this.phoneRepository = phoneRepository;
+        this.gptApi = gptApi;
     }
 
 
@@ -132,6 +136,9 @@ public class SMSListener {
                 }
             }
 
+            //message here depending on List[Message] difference.
+            //if(shouldForwardToGpt(user, specificPhoneNumMsgs))
+            //  gpt.send
             user.updateConversation(key, specificPhoneNumMsgs);
 
 
@@ -143,16 +150,4 @@ public class SMSListener {
         System.out.println("Updated Users: " + phoneRepository);
     }
 
-
-    private boolean isSameContent(List<Message> oldMessages, List<Message> newMessages) {
-        if (oldMessages.size() != newMessages.size()) {
-            return false;
-        }
-        for (int i = 0; i < newMessages.size(); i++) {
-            if (!oldMessages.get(i).getId().equals(newMessages.get(i).getId())) {
-                return false;
-            }
-        }
-        return true;
-    }
 }

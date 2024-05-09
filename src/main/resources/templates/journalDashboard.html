@@ -47,17 +47,15 @@
             <div class="chat-container" id="chat-container"></div>
             <div>
                 <label for="calendarDate">Select Date:</label>
-                <input th:if="${date}" type="date" id="calendarDate" th:value="${date}">
+                <input th:if="${date}" type="date" id="calendarDate" th:value="${date}" onchange="onCalendarChange()">
 
-                <input th:unless="${date}" type="date" id="calendarDate">
+                <input th:unless="${date}" type="date" id="calendarDate" onchange="onCalendarChange()">
 
-                <button onclick="updateJournal()" class="btn btn-primary">View Entry</button>
             </div>
             <div class="row mt-2 rounded overflow-auto" style="background: white; min-height: 70vh; min-width: 50vw" >
                 <div class="col-md-12 ">
                     <label for="outputText">Chatbox:</label>
                     <div id="outputText">
-                        <!-- Messages will be dynamically added here -->
                         <div class="message"  th:classappend="${message.type}" th:each="message : ${messages}">
                             <div th:text="${message.body}"></div>
                             <div class="timestamp" th:text="${message.received}"></div>
@@ -79,28 +77,46 @@
 
 
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const jsonData = document.getElementById('journalEntryJson').textContent;
-<!--        const messages = JSON.parse(jsonData);-->
-        console.log(jsonData); //Put in date from date selecter and update
-        const chatContainer = document.getElementById('outputText');
-        chatContainer.textContent = "";
-        document.getElementById('journalEntryJson').textContent = "";
+     // JavaScript function to handle calendar change and perform POST request
+        function onCalendarChange() {
+            // Get the calendar value (ISO date string yyyy-MM-dd)
+            let dateValue = document.getElementById("calendarDate").value;
 
-<!--        messages['2024-05-03'].forEach(msg => {-->
-<!--            const messageElement = document.createElement('div');-->
-<!--            messageElement.classList.add('message', msg.type === 'sent' ? 'sent' : 'inbox');-->
-<!--            messageElement.innerHTML = `-->
-<!--                <div>${msg.body}</div>-->
-<!--                <div class="timestamp">${msg.received}</div>-->
-<!--            `;-->
-<!--            chatContainer.appendChild(messageElement);-->
-<!--        });-->
-    });
+            // Create a JSON object to send to the server
+            let data = {
+                date: dateValue
+            };
 
-    function updateJournal() {
-        const calendarDate = document.getElementById("calendarDate").value;
-        // Implement the fetch call here to update the chat based on the selected date
+            // Make a POST request using the Fetch API
+            fetch("/journalDashboard", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.json(); // Parse the response JSON if available
+                } else {
+                    console.error('Error in response:', response.status);
+                    return null;
+                }
+            })
+            .then(msgList => {
+                if (msgList) {
+                //Update web page with new data using the method below
+                updateJournal(msgList)
+                    console.log('Server Response:', msgList);
+                }
+            })
+            .catch(error => {
+                console.error('Error in fetch operation:', error);
+            });
+        }
+
+    function updateJournal(msgList) {
+        //Using msgList, update the front end.
     }
 </script>
 
