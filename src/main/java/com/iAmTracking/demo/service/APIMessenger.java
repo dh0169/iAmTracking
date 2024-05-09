@@ -2,6 +2,7 @@ package com.iAmTracking.demo.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import java.net.HttpURLConnection;
@@ -10,10 +11,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
-public interface APIMessenger {
+public interface APIMessenger<T> {
 
 
-    public default ResponseEntity<String> send(String apiUrl, String requestBody, String requestMethod, HashMap<String, String> headers){
+    public default ResponseEntity<String> send(String apiUrl, String requestBody, String requestMethod, HashMap<String, String> headers) {
         try {
             URL url = new URL(apiUrl);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -37,7 +38,7 @@ public interface APIMessenger {
                 scanner.close();
                 connection.disconnect();
 
-                return ResponseEntity.ok(requestBody);
+                return ResponseEntity.ok(responseBody.toString());
 
             } else {
                 System.out.println("HTTP error code: " + responseCode);

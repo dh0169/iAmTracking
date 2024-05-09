@@ -47,10 +47,10 @@ public class WebSecurityConfig{
     private String SMS_API_KEY;
 
 
-    @Value("${spring.datasource.SMS_API_URL}")
+    @Value("${spring.datasource.GPT_API_URL}")
     private String GPT_API_URL;
 
-    @Value("${spring.datasource.SMS_API_KEY}")
+    @Value("${spring.datasource.GPT_API_KEY}")
     private String GPT_API_KEY;
 
 
@@ -120,13 +120,11 @@ public class WebSecurityConfig{
 
     @Bean
     PhoneRepository phoneRepository() {
-//    Add sample data here if needed for demo.
-//    PhoneUser customUser = new PhoneUser("8312060419"); //Sample user
-//
-//
-//    Map<String, PhoneUser> phoneToCustomUser = new HashMap<>();
-//    phoneToCustomUser.put(customUser.getPhoneNum(), customUser);
-        
+//        PhoneUser customUser = new PhoneUser("8312060419"); //Sample user
+//        Map<String, PhoneUser> phoneToCustomUser = new HashMap<>();
+//        phoneToCustomUser.put(customUser.getPhoneNum(), customUser);
+
+
         return new PhoneRepository();
     }
 

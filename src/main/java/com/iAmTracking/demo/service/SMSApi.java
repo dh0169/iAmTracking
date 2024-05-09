@@ -38,10 +38,8 @@ public class SMSApi implements APIMessenger{
 
             int responseCode = connection.getStatusCode().value();
             if (responseCode == HttpURLConnection.HTTP_OK) {
-                String responseBody = connection.getBody();
-
                 // Parse the response body to check the message
-                Map<String, String> responseMap = objectMapper.readValue(responseBody.toString(), new TypeReference<Map<String, String>>() {});
+                HashMap<String, String> responseMap = objectMapper.readValue(connection.getBody(), new TypeReference<HashMap<String, String>>() {});
                 if ("msg sent...allegedly".equals(responseMap.get("msg"))) {
                     System.out.println("SMS sent successfully to " + number);
                     return true;
@@ -53,6 +51,7 @@ public class SMSApi implements APIMessenger{
             }
         } catch (Exception e) {
             System.err.println("Failed to send SMS: " + e.getMessage());
+            e.printStackTrace();
         }
         return false;
     }
