@@ -28,6 +28,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 @RestController
 public class SMSListener {
@@ -36,17 +38,24 @@ public class SMSListener {
     private String iAM_KEY;
 
 
+    private Lock lock = new ReentrantLock();
     private final ObjectMapper objectMapper;
 
     private PhoneRepository phoneRepository;
 
+    private SMSApi smsApi;
+
     private GPTApi gptApi;
 
+    private ConcurrentHashMap<String, Boolean> sent;
+
     @Autowired
-    public SMSListener( ObjectMapper objectMapper, PhoneRepository phoneRepository, GPTApi gptApi) {
+    public SMSListener( ObjectMapper objectMapper, PhoneRepository phoneRepository, GPTApi gptApi, SMSApi smsApi) {
         this.objectMapper = objectMapper;
         this.phoneRepository = phoneRepository;
         this.gptApi = gptApi;
+        this.smsApi = smsApi;
+        this.sent = new ConcurrentHashMap();
     }
 
 
@@ -63,6 +72,7 @@ public class SMSListener {
             }
 
             performActionOnNewMessages(newMessages);
+            System.out.println("\n\nUSERS: " + phoneRepository);
 
 
             return ResponseEntity.ok("Messages processed successfully.");
@@ -71,6 +81,8 @@ public class SMSListener {
             return ResponseEntity.status(500).body("Error processing messages");
 
         }
+
+
     }
 
 
@@ -82,12 +94,12 @@ public class SMSListener {
 
         We got a giant list of message and I want to update each user with new messages.
          */
-        String phoneNumber = PhoneAuthFilter.obtainPhoneNumber(messages.get(0).getNumber());
-        PhoneUser user = phoneRepository.findByPhone(phoneNumber);
+        String phoneNumber = "";
+        PhoneUser user= null;
         ConcurrentHashMap<LocalDate, List<Message>> newMsgs = new ConcurrentHashMap<>();
 
 
-        for (int i = 1; i < messages.size(); i++) {
+        for (int i = 0; i < messages.size(); i++) {
             phoneNumber = PhoneAuthFilter.obtainPhoneNumber(messages.get(i).getNumber());
             user = phoneRepository.findByPhone(phoneNumber);
 
@@ -95,6 +107,7 @@ public class SMSListener {
 
             if (user == null) {
                 // If the user doesn't exist, ignore the message(We can see messages).
+                phoneNumber = "";
                 continue;
             }
 
@@ -125,23 +138,51 @@ public class SMSListener {
 
             List<Message> msgsOnDate = newMsgs.get(key);
             for (Message msg : msgsOnDate){
-                if (msg.getNumber().equals(phoneNumber)){
+                if (!phoneNumber.isEmpty() && msg.getNumber().equals(phoneNumber)){
                     specificPhoneNumMsgs.add(msg);
                 }
             }
 
-            //message here depending on List[Message] difference.
-            //if(shouldForwardToGpt(user, specificPhoneNumMsgs))
+
+            lock.lock();
+            forwardToGPT(user.getPhoneNum(), user.getConversation(key), specificPhoneNumMsgs);
+            lock.unlock();
+
+
             //  gpt.send
             user.updateConversation(key, specificPhoneNumMsgs);
-
-
             this.phoneRepository.saveUser(user);
 
         }
 
-        // Optionally, log the updated state of users for verification or debugging.
-        System.out.println("Updated Users: " + phoneRepository);
+
     }
 
+    public void forwardToGPT(String phoneNumber, List<Message> oldMsgs, List<Message> newMsgs){
+        //Compare oldMsgs and newMsgs and determine the difference
+        StringBuilder builder = new StringBuilder();
+
+        if(oldMsgs == null)
+            oldMsgs = Collections.synchronizedList(new ArrayList<>());
+
+
+        System.out.println("New message(s) received:");
+        for(int i = Math.max(oldMsgs.size() - 1, 0); i < newMsgs.size(); i++){
+            Message cur_msg = newMsgs.get(i);
+            if(cur_msg.getType().equals("inbox"))
+                builder.append(cur_msg.getBody()).append("\n");
+        }
+        System.out.println();
+        if(!builder.isEmpty()){
+            String body = builder.toString();
+            if (this.sent.get(body) == null || !this.sent.get(body)) {
+                String gptResponse = gptApi.sendChat(body);
+                System.out.println("GPT Response: " + gptResponse.replace("\n", ""));
+
+                this.sent.put(body, true);
+                this.smsApi.sendSMS(phoneNumber, gptResponse.strip());
+            }
+        }
+        System.out.println(builder+ "\n\n");
+    }
 }

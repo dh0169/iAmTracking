@@ -52,7 +52,7 @@
                 <input th:unless="${date}" type="date" id="calendarDate" onchange="getNewMessages()">
 
             </div>
-            <div class="row mt-2 rounded overflow-auto" style="background: white; min-height: 70vh; min-width: 50vw" >
+            <div class="row mt-2 rounded" style="background: white; height: 70vh; min-width: 50vw;overflow: scroll;" >
                 <div class="col-md-12 ">
                     <label for="outputText">Chatbox:</label>
                     <div id="outputText">

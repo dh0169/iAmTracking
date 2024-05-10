@@ -3,14 +3,16 @@ package com.iAmTracking.demo.service;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iAmTracking.demo.Message;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class SMSApi implements APIMessenger{
 
@@ -29,13 +31,21 @@ public class SMSApi implements APIMessenger{
             // http://smsApi.com/ + send
             String smsSendURL = this.smsApiUrl+"send";
 
-            HashMap<String, String> headers = new HashMap<>();
-            headers.put("Content-Type", "application/json");
-            headers.put("API_KEY", this.smsApiKey);
-            String requestBody = "{\"msg\":{\"number\":\""+ number +"\", \"body\":\""+body+"\"}}";
+            Map<String, Object> requestBody = new ConcurrentHashMap<>();
+            Map<String, String> msgBody = new ConcurrentHashMap<>();
+            msgBody.put("number", number);
+            msgBody.put("body", body);
 
-            ResponseEntity<String> connection = send(smsSendURL, requestBody, "POST", headers);
+            requestBody.put("msg", msgBody);
 
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            ArrayList<String> tmp = new ArrayList<>();
+            tmp.add(this.smsApiKey);
+            headers.put("API_KEY", tmp);
+
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+            ResponseEntity<String> connection = new RestTemplate().postForEntity(smsSendURL, entity, String.class);
             int responseCode = connection.getStatusCode().value();
             if (responseCode == HttpURLConnection.HTTP_OK) {
                 // Parse the response body to check the message
