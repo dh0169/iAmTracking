@@ -27,6 +27,7 @@ public class Message implements Comparable<Message>{
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime received;
 
+    @JsonProperty("body")
     private String body;
 
     public Message() {
