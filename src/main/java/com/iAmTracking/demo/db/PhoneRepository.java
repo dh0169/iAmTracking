@@ -5,6 +5,7 @@ import com.iAmTracking.demo.PhoneUser;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class PhoneRepository {
 
@@ -16,14 +17,14 @@ public class PhoneRepository {
     saveUser(PhoneUser user) -> Save user to db and return the saved user or Null on fail;
     * */
 
-    private Map<String, PhoneUser> users;
+    private ConcurrentHashMap<String, PhoneUser> users;
 
-    public PhoneRepository(Map<String, PhoneUser> users) {
+    public PhoneRepository(ConcurrentHashMap<String, PhoneUser> users) {
         this.users = users;
     }
 
     public PhoneRepository() {
-        this(new HashMap<String, PhoneUser>());
+        this(new ConcurrentHashMap<>());
     }
 
     public PhoneUser findByPhone(String phone){

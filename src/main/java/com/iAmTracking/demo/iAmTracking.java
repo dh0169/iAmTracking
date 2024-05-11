@@ -26,6 +26,7 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 @Controller
@@ -59,7 +60,6 @@ public class iAmTracking {
     //gptAPI should have a sendChat(String msg) that returns the gpt response
     @Autowired
     GPTApi gptApi;
-
 
     private final Integer otpTTL = 5; //OTP Codes will last for 5 minutes then expire.
 
@@ -144,9 +144,11 @@ public class iAmTracking {
         }
 
 
+
         LocalDate now = LocalDate.now();
-        model.addAttribute("messages", phoneUser.getConversations().get(now));
-        model.addAttribute("date", now);
+        LocalDate nowFixed = LocalDate.of(now.getYear(), now.getMonthValue(), now.getDayOfMonth()-1);
+        model.addAttribute("messages", phoneUser.getConversations().get(nowFixed));
+        model.addAttribute("date", nowFixed);
 
 
 

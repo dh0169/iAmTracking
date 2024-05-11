@@ -66,6 +66,47 @@ public class SMSApi implements APIMessenger{
         return false;
     }
 
+    public boolean sendSMS(Message msg) {
+        try {
+            // http://smsApi.com/ + send
+            String smsSendURL = this.smsApiUrl+"send";
+
+            Map<String, Object> requestBody = new ConcurrentHashMap<>();
+            Map<String, String> msgBody = new ConcurrentHashMap<>();
+            msgBody.put("number", msg.getNumber());
+            msgBody.put("body", msg.getBody());
+
+            requestBody.put("msg", msgBody);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            ArrayList<String> tmp = new ArrayList<>();
+            tmp.add(this.smsApiKey);
+            headers.put("API_KEY", tmp);
+
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+            ResponseEntity<String> connection = new RestTemplate().postForEntity(smsSendURL, entity, String.class);
+            int responseCode = connection.getStatusCode().value();
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                // Parse the response body to check the message
+                HashMap<String, String> responseMap = objectMapper.readValue(connection.getBody(), new TypeReference<HashMap<String, String>>() {});
+                if ("msg sent...allegedly".equals(responseMap.get("msg"))) {
+                    msg.sent(); //Set Sent var
+                    System.out.println("SMS sent successfully to " + msg.getNumber());
+                    return true;
+                } else {
+                    System.out.println("SMS sending failed with message: " + responseMap.get("msg"));
+                }
+            } else {
+                System.out.println("Failed to send SMS. HTTP error code: " + responseCode);
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to send SMS: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return false;
+    }
+
     public List<Message> listSMS(String number) {
         try {
             URL url = new URL(smsApiUrl + "list");

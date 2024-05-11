@@ -11,6 +11,13 @@ import com.iAmTracking.demo.auth.providers.PhoneAuthProvider;
 import com.iAmTracking.demo.db.OTPRepository;
 import com.iAmTracking.demo.db.PhoneRepository;
 import com.iAmTracking.demo.db.PhoneUserDetailsService;
+import io.github.amithkoujalgi.ollama4j.core.OllamaAPI;
+import io.github.amithkoujalgi.ollama4j.core.exceptions.OllamaBaseException;
+import io.github.amithkoujalgi.ollama4j.core.models.OllamaResult;
+import io.github.amithkoujalgi.ollama4j.core.types.OllamaModelType;
+import io.github.amithkoujalgi.ollama4j.core.utils.OptionsBuilder;
+import io.github.amithkoujalgi.ollama4j.core.utils.PromptBuilder;
+import io.github.amithkoujalgi.ollama4j.core.utils.SamplePrompts;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,6 +39,7 @@ import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.header.writers.ClearSiteDataHeaderWriter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -152,5 +160,30 @@ public class WebSecurityConfig{
 
     @Bean
     SMSApi smsApi(){ return new SMSApi(this.SMS_API_URL, this.SMS_API_KEY, new ObjectMapper());}
+    @Bean
+    ConcurrentHashMap<Integer, Boolean> getMap(){ return new ConcurrentHashMap<>();}
+
+    @Bean
+    OllamaAPI ollamaAPI(){
+        return new OllamaAPI("http://10.0.0.105:11434");
+    }
+
+
+    public static void main(String[] args) throws OllamaBaseException, IOException, InterruptedException {
+        OllamaAPI ollamaAPI = new OllamaAPI("http://10.0.0.105:11434");
+        ollamaAPI.setRequestTimeoutSeconds(10);
+
+        String model = "llama3";
+
+        PromptBuilder promptBuilder =
+                new PromptBuilder()
+                        .addLine("You are the friendly AI assistant known as 'iAmTracking'")
+                        .addLine("A user will interact with you throughout their day by sending whatever it is they need help keep track of.")
+                        .addLine("Try to keep output to no more than 500 chars. Be witty and have thoughtful responses for the user")
+                        .addLine("When a user asks to summarize their day, review the conversation and provide a thoughtful responses with organized tasks and a progress report.");
+
+        OllamaResult response = ollamaAPI.generate(model, promptBuilder.build(), new OptionsBuilder().build());
+        System.out.println(response.getResponse());
+    }
 
 }

@@ -32,7 +32,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 @RestController
-public class SMSListener {
+public class    SMSListener {
 
     @Value("${spring.datasource.IAM_KEY}")
     private String iAM_KEY;
@@ -47,15 +47,17 @@ public class SMSListener {
 
     private GPTApi gptApi;
 
-    private ConcurrentHashMap<String, Boolean> sent;
+    private ConcurrentHashMap<Integer, Boolean> sent;
+
+
 
     @Autowired
-    public SMSListener( ObjectMapper objectMapper, PhoneRepository phoneRepository, GPTApi gptApi, SMSApi smsApi) {
+    public SMSListener( ObjectMapper objectMapper, PhoneRepository phoneRepository, GPTApi gptApi, SMSApi smsApi, ConcurrentHashMap<Integer, Boolean> sent) {
         this.objectMapper = objectMapper;
         this.phoneRepository = phoneRepository;
         this.gptApi = gptApi;
         this.smsApi = smsApi;
-        this.sent = new ConcurrentHashMap();
+        this.sent = sent;
     }
 
 
@@ -72,8 +74,6 @@ public class SMSListener {
             }
 
             performActionOnNewMessages(newMessages);
-            System.out.println("\n\nUSERS: " + phoneRepository);
-
 
             return ResponseEntity.ok("Messages processed successfully.");
         } catch (Exception e) {
@@ -102,12 +102,10 @@ public class SMSListener {
         for (int i = 0; i < messages.size(); i++) {
             phoneNumber = PhoneAuthFilter.obtainPhoneNumber(messages.get(i).getNumber());
             user = phoneRepository.findByPhone(phoneNumber);
-
             Message message = messages.get(i);
 
             if (user == null) {
                 // If the user doesn't exist, ignore the message(We can see messages).
-                phoneNumber = "";
                 continue;
             }
 
@@ -118,19 +116,13 @@ public class SMSListener {
             if( userMsgsOnDate != null && !userMsgsOnDate.contains(message)){
                 userMsgsOnDate.add(message);
             }else if(userMsgsOnDate == null){
-                userMsgsOnDate = new ArrayList<Message>();
+                userMsgsOnDate = Collections.synchronizedList(new ArrayList<Message>());
                 userMsgsOnDate.add(message);
             }
 
             newMsgs.put(messageDateTime.toLocalDate(), userMsgsOnDate);
-
-
-            //for each localdate key in the newMsg, create new list and add all with same thread id. update userMsgsOnDate.updateConversation.
-
-
-
-            // Save the updated user in the repository.
         }
+
         List<Message> specificPhoneNumMsgs;
         for (LocalDate key : newMsgs.keySet()) {
             specificPhoneNumMsgs = Collections.synchronizedList(new ArrayList<>());
@@ -144,45 +136,34 @@ public class SMSListener {
             }
 
 
-            lock.lock();
-            forwardToGPT(user.getPhoneNum(), user.getConversation(key), specificPhoneNumMsgs);
-            lock.unlock();
-
-
+            //forwardToGPT(user.getPhoneNum(), user.getConversation(key), specificPhoneNumMsgs);
             //  gpt.send
+            List<Message> diff = getSendDifference(user.getConversation(key), specificPhoneNumMsgs);
+            System.out.println(diff);
+            for (Message message : diff){
+                if(this.sent.get(message.getId()) == null || !this.sent.get(message.getId())){
+                    System.out.println("User: "+ message.getNumber());
+                    System.out.println("Prompt: "+ message.getBody());
+                    String gptResponse = this.gptApi.sendChat(message.getBody()).strip();
+                    System.out.println("Response: "+ gptResponse);
+                    this.smsApi.sendSMS(message.getNumber(), gptResponse);
+                    System.out.println("Sent!\n\n");
+                    this.sent.put(message.getId(), true);
+                }
+            }
+
             user.updateConversation(key, specificPhoneNumMsgs);
             this.phoneRepository.saveUser(user);
-
         }
-
-
     }
 
-    public void forwardToGPT(String phoneNumber, List<Message> oldMsgs, List<Message> newMsgs){
-        //Compare oldMsgs and newMsgs and determine the difference
-        StringBuilder builder = new StringBuilder();
-
-        if(oldMsgs == null)
-            oldMsgs = Collections.synchronizedList(new ArrayList<>());
-
-
-        System.out.println("New message(s) received:");
-        for(int i = Math.max(oldMsgs.size() - 1, 0); i < newMsgs.size(); i++){
-            Message cur_msg = newMsgs.get(i);
-            if(cur_msg.getType().equals("inbox"))
-                builder.append(cur_msg.getBody()).append("\n");
-        }
-        System.out.println();
-        if(!builder.isEmpty()){
-            String body = builder.toString();
-            if (this.sent.get(body) == null || !this.sent.get(body)) {
-                String gptResponse = gptApi.sendChat(body);
-                System.out.println("GPT Response: " + gptResponse.replace("\n", ""));
-
-                this.sent.put(body, true);
-                this.smsApi.sendSMS(phoneNumber, gptResponse.strip());
+    private List<Message> getSendDifference(List<Message> oldMsg, List<Message> newMsg) {
+        List<Message> difference = new ArrayList<>();
+        for (Message msg1 : oldMsg) {
+            if (!newMsg.contains(msg1) && msg1.fromUser()) {
+                difference.add(msg1);
             }
         }
-        System.out.println(builder+ "\n\n");
+        return difference;
     }
 }

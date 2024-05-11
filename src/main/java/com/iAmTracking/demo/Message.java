@@ -30,6 +30,9 @@ public class Message implements Comparable<Message>{
     @JsonProperty("body")
     private String body;
 
+    private Boolean sent = false;
+
+
     public Message() {
         // Default constructor needed for JSON deserialization
     }
@@ -123,6 +126,19 @@ public class Message implements Comparable<Message>{
         } catch (Exception e) {
             return "Error converting to JSON: " + e.getMessage();
         }
+    }
+
+    public Boolean beenSent(){
+        return this.sent;
+    }
+
+    public void sent(){
+        this.sent = true;
+    }
+
+
+    public Boolean fromUser(){
+        return this.getType().equals("inbox");
     }
 
     @Override

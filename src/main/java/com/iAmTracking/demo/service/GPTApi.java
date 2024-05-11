@@ -5,10 +5,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iAmTracking.demo.Message;
 
-<<<<<<< Updated upstream
-=======
+
 import com.iAmTracking.demo.config.WebSecurityConfig;
->>>>>>> Stashed changes
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.security.core.parameters.P;
@@ -23,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.ArrayList;
 
-public class GPTApi implements APIMessenger{
+public class GPTApi{
     private String gptApiUrl;
     private String gptApiKey;
 
@@ -55,11 +53,8 @@ public class GPTApi implements APIMessenger{
     }
 
 
-<<<<<<< Updated upstream
-    private String sendChat(String message) {
-=======
+
     public String sendChat(String message) {
->>>>>>> Stashed changes
         // This method takes in a Message object and sends the body to the GPT API
         // This class implements APIMessenger, so use send() to send the actual web request
 
@@ -94,11 +89,7 @@ public class GPTApi implements APIMessenger{
         // Wait for the response message, and return the specific output from GPT + error handling
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
         try {
-<<<<<<< Updated upstream
-            ResponseEntity<String> response = restTemplate.postForEntity(gptApiUrl, entity, String.class);
-=======
             ResponseEntity<String> response = new RestTemplate().postForEntity(gptApiUrl, entity, String.class);
->>>>>>> Stashed changes
             return extractGPTTextResponse(response.getBody());
         } catch (HttpClientErrorException | HttpServerErrorException e) {
             System.err.println("Error response from API: " + e.getResponseBodyAsString());
@@ -131,9 +122,4 @@ public class GPTApi implements APIMessenger{
             return "Failed to parse response from GPT";
         }
     }
-
-<<<<<<< Updated upstream
 }
-=======
-}
->>>>>>> Stashed changes
