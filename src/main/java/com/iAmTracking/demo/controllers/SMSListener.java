@@ -8,6 +8,12 @@ import com.iAmTracking.demo.auth.filters.PhoneAuthFilter;
 import com.iAmTracking.demo.db.PhoneRepository;
 import com.iAmTracking.demo.service.GPTApi;
 import com.iAmTracking.demo.service.SMSApi;
+import io.github.amithkoujalgi.ollama4j.core.OllamaAPI;
+import io.github.amithkoujalgi.ollama4j.core.exceptions.OllamaBaseException;
+import io.github.amithkoujalgi.ollama4j.core.models.chat.OllamaChatMessageRole;
+import io.github.amithkoujalgi.ollama4j.core.models.chat.OllamaChatRequestBuilder;
+import io.github.amithkoujalgi.ollama4j.core.models.chat.OllamaChatRequestModel;
+import io.github.amithkoujalgi.ollama4j.core.models.chat.OllamaChatResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -21,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.net.ssl.HttpsURLConnection;
+import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.time.LocalDate;
@@ -50,14 +57,19 @@ public class    SMSListener {
     private ConcurrentHashMap<Integer, Boolean> sent;
 
 
+    OllamaAPI ollamaAPI;
+
+
+
 
     @Autowired
-    public SMSListener( ObjectMapper objectMapper, PhoneRepository phoneRepository, GPTApi gptApi, SMSApi smsApi, ConcurrentHashMap<Integer, Boolean> sent) {
+    public SMSListener( ObjectMapper objectMapper, PhoneRepository phoneRepository, GPTApi gptApi, SMSApi smsApi, ConcurrentHashMap<Integer, Boolean> sent, OllamaAPI ollamaAPI, OllamaChatRequestBuilder builder) {
         this.objectMapper = objectMapper;
         this.phoneRepository = phoneRepository;
         this.gptApi = gptApi;
         this.smsApi = smsApi;
         this.sent = sent;
+        this.ollamaAPI = ollamaAPI;
     }
 
 
@@ -77,16 +89,15 @@ public class    SMSListener {
 
             return ResponseEntity.ok("Messages processed successfully.");
         } catch (Exception e) {
+            System.out.println(e.getCause().getMessage());
             System.err.println("Failed to process new messages: " + e.getMessage());
             return ResponseEntity.status(500).body("Error processing messages");
-
         }
-
 
     }
 
 
-    private void performActionOnNewMessages(List<Message> messages) {
+    private void performActionOnNewMessages(List<Message> messages) throws OllamaBaseException, IOException, InterruptedException {
         if(messages.size() <= 0){ return; }
 
 
@@ -139,14 +150,16 @@ public class    SMSListener {
             //forwardToGPT(user.getPhoneNum(), user.getConversation(key), specificPhoneNumMsgs);
             //  gpt.send
             List<Message> diff = getSendDifference(user.getConversation(key), specificPhoneNumMsgs);
-            System.out.println(diff);
             for (Message message : diff){
                 if(this.sent.get(message.getId()) == null || !this.sent.get(message.getId())){
                     System.out.println("User: "+ message.getNumber());
                     System.out.println("Prompt: "+ message.getBody());
-                    String gptResponse = this.gptApi.sendChat(message.getBody()).strip();
-                    System.out.println("Response: "+ gptResponse);
-                    this.smsApi.sendSMS(message.getNumber(), gptResponse);
+
+                    OllamaChatRequestBuilder builder = OllamaChatRequestBuilder.getInstance("llama3");
+                    user.setRequestModel(builder.withMessage(OllamaChatMessageRole.USER,"MAX RESPONSE is 140 chars\n" + message.getBody()).build());
+                    OllamaChatResult ollamaResponse =  this.ollamaAPI.chat(user.getRequestModel());
+                    System.out.println("Ollama Response: "+ ollamaResponse.getResponse());
+                    this.smsApi.sendSMS(message.getNumber(), ollamaResponse.getResponse());
                     System.out.println("Sent!\n\n");
                     this.sent.put(message.getId(), true);
                 }

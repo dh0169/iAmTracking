@@ -75,6 +75,12 @@
 			<scope>test</scope>
 		</dependency>
 
+		<dependency>
+			<groupId>io.github.amithkoujalgi</groupId>
+			<artifactId>ollama4j</artifactId>
+			<version>1.0.64</version>
+		</dependency>
+
 
 	</dependencies>
 

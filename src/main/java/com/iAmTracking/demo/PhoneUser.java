@@ -3,6 +3,12 @@ package com.iAmTracking.demo;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.iAmTracking.demo.service.SMSApi;
+import io.github.amithkoujalgi.ollama4j.core.models.chat.OllamaChatMessage;
+import io.github.amithkoujalgi.ollama4j.core.models.chat.OllamaChatMessageRole;
+import io.github.amithkoujalgi.ollama4j.core.models.chat.OllamaChatRequestBuilder;
+import io.github.amithkoujalgi.ollama4j.core.models.chat.OllamaChatRequestModel;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -18,16 +24,22 @@ public class PhoneUser implements UserDetails {
 
     private String phoneNum;
 
+    private OllamaChatRequestModel requestModel;
+
+    private OllamaChatRequestBuilder builder;
+
+
     private ConcurrentHashMap<LocalDate, List<Message>> conversations; //Conversation with ChatGPT
 
-    public PhoneUser(String phoneNum, ConcurrentHashMap<LocalDate, List<Message>> conversations){
-        this.phoneNum = phoneNum;
-        this.conversations = conversations;
-        mapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());  // Register the JavaTimeModule
-        mapper.disable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS); // Optional: disable writing dates as timestamps
+    public PhoneUser(){
+        this.mapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());  // Register the JavaTimeModule
+        this.mapper.disable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS); // Optional: disable writing dates as timestamps
+
+        //this.builder = OllamaChatRequestBuilder.getInstance("llama3");
     }
 
     public PhoneUser(PhoneUser user){
+        this();
         if(user != null) {
             this.phoneNum = user.getPhoneNum();
             this.conversations = user.conversations;
@@ -41,6 +53,7 @@ public class PhoneUser implements UserDetails {
     }
 
     public PhoneUser(String phoneNum){
+        this();
         //Empty conversation map
         List<Message> tmpList = Collections.synchronizedList(new ArrayList<Message>());
         ConcurrentHashMap<LocalDate, List<Message>> tmpMap = new ConcurrentHashMap<>();
@@ -64,6 +77,26 @@ public class PhoneUser implements UserDetails {
         this.conversations.put(date, messages);
     }
 
+    public OllamaChatRequestModel getRequestModel() {
+        return requestModel;
+    }
+
+//    public OllamaChatRequestModel newChatModel(String body){
+//
+//        this.requestModel = this.builder.withMessages(this.getRequestModel().getMessages()).withMessage(OllamaChatMessageRole.USER, body).build();
+//        return this.requestModel;
+//    }
+
+    public void setRequestModel(OllamaChatRequestBuilder builder) {
+        this.builder = builder;
+    }
+    public OllamaChatRequestBuilder getBuilder() {
+        return this.builder;
+    }
+
+    public void setRequestModel(OllamaChatRequestModel requestModel) {
+        this.requestModel = requestModel;
+    }
 
     public ArrayList<Message> getConversation(LocalDate date) {
         if (conversations.containsKey(date)) {

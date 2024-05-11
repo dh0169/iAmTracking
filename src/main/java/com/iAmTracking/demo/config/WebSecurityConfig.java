@@ -14,6 +14,7 @@ import com.iAmTracking.demo.db.PhoneUserDetailsService;
 import io.github.amithkoujalgi.ollama4j.core.OllamaAPI;
 import io.github.amithkoujalgi.ollama4j.core.exceptions.OllamaBaseException;
 import io.github.amithkoujalgi.ollama4j.core.models.OllamaResult;
+import io.github.amithkoujalgi.ollama4j.core.models.chat.OllamaChatRequestBuilder;
 import io.github.amithkoujalgi.ollama4j.core.types.OllamaModelType;
 import io.github.amithkoujalgi.ollama4j.core.utils.OptionsBuilder;
 import io.github.amithkoujalgi.ollama4j.core.utils.PromptBuilder;
@@ -165,25 +166,14 @@ public class WebSecurityConfig{
 
     @Bean
     OllamaAPI ollamaAPI(){
-        return new OllamaAPI("http://10.0.0.105:11434");
+        OllamaAPI llama = new OllamaAPI("http://127.0.0.1:11434");
+        llama.setRequestTimeoutSeconds(30);
+        return llama;
     }
 
-
-    public static void main(String[] args) throws OllamaBaseException, IOException, InterruptedException {
-        OllamaAPI ollamaAPI = new OllamaAPI("http://10.0.0.105:11434");
-        ollamaAPI.setRequestTimeoutSeconds(10);
-
-        String model = "llama3";
-
-        PromptBuilder promptBuilder =
-                new PromptBuilder()
-                        .addLine("You are the friendly AI assistant known as 'iAmTracking'")
-                        .addLine("A user will interact with you throughout their day by sending whatever it is they need help keep track of.")
-                        .addLine("Try to keep output to no more than 500 chars. Be witty and have thoughtful responses for the user")
-                        .addLine("When a user asks to summarize their day, review the conversation and provide a thoughtful responses with organized tasks and a progress report.");
-
-        OllamaResult response = ollamaAPI.generate(model, promptBuilder.build(), new OptionsBuilder().build());
-        System.out.println(response.getResponse());
+    @Bean
+    OllamaChatRequestBuilder ollamaChatRequestBuilder(){
+        return OllamaChatRequestBuilder.getInstance("llama3");
     }
 
 }

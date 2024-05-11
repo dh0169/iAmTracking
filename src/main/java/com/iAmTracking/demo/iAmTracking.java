@@ -6,6 +6,11 @@ import com.iAmTracking.demo.db.OTPRepository;
 import com.iAmTracking.demo.db.PhoneRepository;
 import com.iAmTracking.demo.service.GPTApi;
 import com.iAmTracking.demo.service.SMSApi;
+import io.github.amithkoujalgi.ollama4j.core.OllamaAPI;
+import io.github.amithkoujalgi.ollama4j.core.models.chat.OllamaChatMessageRole;
+import io.github.amithkoujalgi.ollama4j.core.models.chat.OllamaChatRequestBuilder;
+import io.github.amithkoujalgi.ollama4j.core.models.chat.OllamaChatRequestModel;
+import io.github.amithkoujalgi.ollama4j.core.models.chat.OllamaChatResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cglib.core.Local;
@@ -63,13 +68,17 @@ public class iAmTracking {
 
     private final Integer otpTTL = 5; //OTP Codes will last for 5 minutes then expire.
 
-    public iAmTracking(SecurityContextRepository securityContextRepository, PhoneRepository phoneRepository, OTPRepository otpRepository, SMSApi smsApi, GPTApi gptApi, ObjectMapper objectMapper) {
+    @Autowired
+    OllamaAPI ollamaAPI;
+
+    public iAmTracking(SecurityContextRepository securityContextRepository, PhoneRepository phoneRepository, OTPRepository otpRepository, SMSApi smsApi, GPTApi gptApi, ObjectMapper objectMapper, OllamaAPI ollamaAPI) {
         this.phoneRepository = phoneRepository;
         this.securityContextRepository = securityContextRepository;
         this.otpRepository = otpRepository;
         this.smsApi = smsApi;
         this.gptApi = gptApi;
         this.objectMapper = objectMapper;
+        this.ollamaAPI = ollamaAPI;
     }
 
     @GetMapping("/")
@@ -140,15 +149,22 @@ public class iAmTracking {
         //User doesn't exist, create user. Automatic registration on auth
         if(phoneUser == null){
             phoneUser = phoneRepository.createNewUser(phoneNumber);
-            smsApi.sendSMS(phoneUser.getPhoneNum(), "Welcome to iAmTracking! I am your friendly AI Powered assistant. Please let me know how I can help\uD83D\uDE01");
+            try{
+                OllamaChatRequestBuilder builder = OllamaChatRequestBuilder.getInstance("llama3");
+                phoneUser.setRequestModel(builder.withMessage(OllamaChatMessageRole.USER,"MAX RESPONSE is 500 chars. Your name is iAmTracking. You are a virtual AI assistant whose purpose is to assist people with tasks throughout the day." +
+                        "Be witty and friendly. Make sure to ask me my name.").build());
+                phoneUser.setRequestModel(builder.withMessage(OllamaChatMessageRole.USER,"If you are receiving this message that means I have just signed up. Ask me my name and if there is a nickname I'd like to call you. If given a nickname, make sure to respond to this name.").build());
+                OllamaChatResult ollamaResponse =  this.ollamaAPI.chat(phoneUser.getRequestModel());
+                smsApi.sendSMS(phoneUser.getPhoneNum(), ollamaResponse.getResponse());
+            }catch (Exception e){
+                System.out.println(e);
+            }
         }
 
 
-
         LocalDate now = LocalDate.now();
-        LocalDate nowFixed = LocalDate.of(now.getYear(), now.getMonthValue(), now.getDayOfMonth()-1);
-        model.addAttribute("messages", phoneUser.getConversations().get(nowFixed));
-        model.addAttribute("date", nowFixed);
+        model.addAttribute("messages", phoneUser.getConversations().get(now));
+        model.addAttribute("date", now);
 
 
 
