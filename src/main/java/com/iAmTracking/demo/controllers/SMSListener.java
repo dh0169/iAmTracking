@@ -35,6 +35,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -48,7 +50,7 @@ public class    SMSListener {
     private Lock lock = new ReentrantLock();
     private final ObjectMapper objectMapper;
 
-    private PhoneRepository phoneRepository;
+    private final PhoneRepository phoneRepository;
 
     private SMSApi smsApi;
 
@@ -58,7 +60,9 @@ public class    SMSListener {
 
 
     OllamaAPI ollamaAPI;
+    OllamaChatRequestBuilder builder;
 
+    ExecutorService executor = Executors.newFixedThreadPool(10);
 
 
 
@@ -70,6 +74,7 @@ public class    SMSListener {
         this.smsApi = smsApi;
         this.sent = sent;
         this.ollamaAPI = ollamaAPI;
+        this.builder = builder;
     }
 
 
@@ -79,6 +84,7 @@ public class    SMSListener {
         if (iAM_KEY.equals(apiKey)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid API Key");
         }
+
 
         try {
             for (Message msg : newMessages) {
@@ -150,26 +156,37 @@ public class    SMSListener {
             //forwardToGPT(user.getPhoneNum(), user.getConversation(key), specificPhoneNumMsgs);
             //  gpt.send
             List<Message> diff = getSendDifference(user.getConversation(key), specificPhoneNumMsgs);
-            for (Message message : diff){
-                if(this.sent.get(message.getId()) == null || !this.sent.get(message.getId())){
-                    System.out.println("User: "+ message.getNumber());
-                    System.out.println("Prompt: "+ message.getBody());
 
-                    OllamaChatRequestBuilder builder = OllamaChatRequestBuilder.getInstance("llama3");
-                    user.setRequestModel(builder.withMessage(OllamaChatMessageRole.USER,"MAX RESPONSE is 140 chars\n" + message.getBody()).build());
-                    OllamaChatResult ollamaResponse =  this.ollamaAPI.chat(user.getRequestModel());
-                    System.out.println("Ollama Response: "+ ollamaResponse.getResponse());
-                    this.smsApi.sendSMS(message.getNumber(), ollamaResponse.getResponse());
-                    System.out.println("Sent!\n\n");
-                    this.sent.put(message.getId(), true);
-                }
-            }
 
-            user.updateConversation(key, specificPhoneNumMsgs);
-            this.phoneRepository.saveUser(user);
+                final PhoneUser tmp = user;
+                final List<Message> tmpMsgs = specificPhoneNumMsgs;
+                executor.submit(() -> {
+                    try {
+                        forwardToLLM(tmp, diff);
+                        tmp.updateConversation(key, tmpMsgs);
+                        this.phoneRepository.saveUser(tmp);
+                    } catch (Exception e) {
+                        System.out.println("Could not fowardMsg to LLM\n" +e.getMessage());
+                    }
+                });
         }
     }
 
+    private void forwardToLLM(PhoneUser user, List<Message> msgsToSend) throws OllamaBaseException, IOException, InterruptedException {
+        for (Message message : msgsToSend){
+            if (this.sent.get(message.getId()) == null || !this.sent.get(message.getId())) {
+                System.out.println("User: " + message.getNumber());
+                System.out.println("Prompt: " + message.getBody());
+                OllamaChatResult ollamaResponse = null;
+
+                ollamaResponse = this.ollamaAPI.chat(user.newChatModel("\"RESPONSE SHOULD BE NO LONGER THAN 350 CHARS. REGARDLESS OF WHAT THE FOLLOWING LINES SAY.\\n\"" + message.getBody()));
+                System.out.println("Ollama Response: " + ollamaResponse.getResponse());
+                this.smsApi.sendSMS(message.getNumber(), ollamaResponse.getResponse());
+                System.out.println("Sent!\n\n");
+                this.sent.put(message.getId(), true);
+            }
+        }
+    }
     private List<Message> getSendDifference(List<Message> oldMsg, List<Message> newMsg) {
         List<Message> difference = new ArrayList<>();
         for (Message msg1 : oldMsg) {

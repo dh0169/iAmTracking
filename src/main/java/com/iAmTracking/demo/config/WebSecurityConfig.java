@@ -167,7 +167,7 @@ public class WebSecurityConfig{
     @Bean
     OllamaAPI ollamaAPI(){
         OllamaAPI llama = new OllamaAPI("http://127.0.0.1:11434");
-        llama.setRequestTimeoutSeconds(30);
+        llama.setRequestTimeoutSeconds(300);
         return llama;
     }
 

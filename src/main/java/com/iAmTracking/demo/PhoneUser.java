@@ -35,7 +35,9 @@ public class PhoneUser implements UserDetails {
         this.mapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());  // Register the JavaTimeModule
         this.mapper.disable(com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS); // Optional: disable writing dates as timestamps
 
-        //this.builder = OllamaChatRequestBuilder.getInstance("llama3");
+        this.builder = OllamaChatRequestBuilder.getInstance("llama3");
+        this.requestModel = builder.withMessage(OllamaChatMessageRole.USER,"RESPONSE SHOULD BE NO LONGER THAN 160 CHARS.\nYour name is iAmTracking. YOU ARE NO LONGER llama3, you are the virtual AI assistant known as iAmTracking or iam for short. Your purpose is to keep track of peoples tasks throughout the day offering assistance when needed").build();
+        this.requestModel.setKeepAlive("7200m");
     }
 
     public PhoneUser(PhoneUser user){
@@ -81,11 +83,10 @@ public class PhoneUser implements UserDetails {
         return requestModel;
     }
 
-//    public OllamaChatRequestModel newChatModel(String body){
-//
-//        this.requestModel = this.builder.withMessages(this.getRequestModel().getMessages()).withMessage(OllamaChatMessageRole.USER, body).build();
-//        return this.requestModel;
-//    }
+    public OllamaChatRequestModel newChatModel(String body){
+        this.requestModel = this.builder.withMessages(this.getRequestModel().getMessages()).withMessage(OllamaChatMessageRole.USER, body).build();
+        return this.requestModel;
+    }
 
     public void setRequestModel(OllamaChatRequestBuilder builder) {
         this.builder = builder;

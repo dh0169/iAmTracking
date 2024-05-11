@@ -150,11 +150,8 @@ public class iAmTracking {
         if(phoneUser == null){
             phoneUser = phoneRepository.createNewUser(phoneNumber);
             try{
-                OllamaChatRequestBuilder builder = OllamaChatRequestBuilder.getInstance("llama3");
-                phoneUser.setRequestModel(builder.withMessage(OllamaChatMessageRole.USER,"MAX RESPONSE is 500 chars. Your name is iAmTracking. You are a virtual AI assistant whose purpose is to assist people with tasks throughout the day." +
-                        "Be witty and friendly. Make sure to ask me my name.").build());
-                phoneUser.setRequestModel(builder.withMessage(OllamaChatMessageRole.USER,"If you are receiving this message that means I have just signed up. Ask me my name and if there is a nickname I'd like to call you. If given a nickname, make sure to respond to this name.").build());
-                OllamaChatResult ollamaResponse =  this.ollamaAPI.chat(phoneUser.getRequestModel());
+
+                OllamaChatResult ollamaResponse =  this.ollamaAPI.chat(phoneUser.newChatModel("If you are receiving this message that means I have just signed up. Introduce yourself and ask for my name"));
                 smsApi.sendSMS(phoneUser.getPhoneNum(), ollamaResponse.getResponse());
             }catch (Exception e){
                 System.out.println(e);
